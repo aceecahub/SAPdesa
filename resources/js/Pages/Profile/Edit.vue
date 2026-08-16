@@ -16,41 +16,39 @@ defineProps({
 </script>
 
 <template>
-    <Head title="Profile" />
+    <Head title="Pengaturan Profil Saya" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h2
-                class="text-xl font-semibold leading-tight text-gray-800 dark:text-gray-200"
-            >
-                Profile
-            </h2>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-surface-900 dark:text-surface-50">
+                        Pengaturan Profil Saya
+                    </h1>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 font-medium">
+                        Perbarui informasi akun, alamat email, dan kata sandi Anda
+                    </p>
+                </div>
+            </div>
         </template>
 
-        <div class="py-12">
-            <div class="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <UpdateProfileInformationForm
-                        :must-verify-email="mustVerifyEmail"
-                        :status="status"
-                        class="max-w-xl"
-                    />
-                </div>
+        <div class="max-w-4xl mx-4 sm:mx-0 space-y-6">
+            <div class="card p-6 sm:p-8 rounded-2xl shadow-sm">
+                <UpdateProfileInformationForm
+                    :must-verify-email="mustVerifyEmail"
+                    :status="status"
+                    class="max-w-xl"
+                />
+            </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <UpdatePasswordForm class="max-w-xl" />
-                </div>
+            <div class="card p-6 sm:p-8 rounded-2xl shadow-sm">
+                <UpdatePasswordForm class="max-w-xl" />
+            </div>
 
-                <div
-                    class="bg-white p-4 shadow sm:rounded-lg sm:p-8 dark:bg-gray-800"
-                >
-                    <DeleteUserForm class="max-w-xl" />
-                </div>
+            <div class="card p-6 sm:p-8 rounded-2xl shadow-sm border border-rose-200/60 dark:border-rose-900/40">
+                <DeleteUserForm class="max-w-xl" />
             </div>
         </div>
     </AuthenticatedLayout>
 </template>
+

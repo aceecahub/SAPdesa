@@ -228,6 +228,23 @@ class LaporanController extends Controller
         $oldStatus = $laporan->status;
         $newStatus = $request->status;
 
+        // Cek hirarki status: tidak boleh kembali ke tahap sebelumnya
+        $statusOrder = [
+            'baru' => 1,
+            'diproses' => 2,
+            'selesai' => 3,
+            'ditolak' => 3,
+        ];
+
+        $oldOrder = $statusOrder[$oldStatus] ?? 1;
+        $newOrder = $statusOrder[$newStatus] ?? 1;
+
+        if ($newOrder < $oldOrder || ($oldOrder === 3 && $newStatus !== $oldStatus)) {
+            return redirect()->back()->withErrors([
+                'status' => "Status yang sudah berada pada tahap \"{$oldStatus}\" tidak dapat dikembalikan ke tahap sebelumnya."
+            ]);
+        }
+
         $laporan->update([
             'status' => $newStatus,
             'respon_admin' => $request->respon_admin ?? $laporan->respon_admin,

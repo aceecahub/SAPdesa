@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Dusun;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class DusunController extends Controller
@@ -27,9 +28,16 @@ class DusunController extends Controller
             'nama' => 'required|string|max:255|unique:dusun,nama',
             'jumlah_penduduk' => 'nullable|integer|min:0',
             'nama_kepala' => 'nullable|string|max:255',
+            'foto_kepala' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        Dusun::create($request->only(['nama', 'jumlah_penduduk', 'nama_kepala']));
+        $data = $request->only(['nama', 'jumlah_penduduk', 'nama_kepala']);
+
+        if ($request->hasFile('foto_kepala')) {
+            $data['foto_kepala'] = $request->file('foto_kepala')->store('dusun', 'public');
+        }
+
+        Dusun::create($data);
 
         return redirect()->route('master.dusun.index')
             ->with('success', 'Dusun berhasil ditambahkan.');
@@ -55,9 +63,19 @@ class DusunController extends Controller
             'nama' => 'required|string|max:255|unique:dusun,nama,' . $dusun->id,
             'jumlah_penduduk' => 'nullable|integer|min:0',
             'nama_kepala' => 'nullable|string|max:255',
+            'foto_kepala' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
         ]);
 
-        $dusun->update($request->only(['nama', 'jumlah_penduduk', 'nama_kepala']));
+        $data = $request->only(['nama', 'jumlah_penduduk', 'nama_kepala']);
+
+        if ($request->hasFile('foto_kepala')) {
+            if ($dusun->foto_kepala && Storage::disk('public')->exists($dusun->foto_kepala)) {
+                Storage::disk('public')->delete($dusun->foto_kepala);
+            }
+            $data['foto_kepala'] = $request->file('foto_kepala')->store('dusun', 'public');
+        }
+
+        $dusun->update($data);
 
         return redirect()->route('master.dusun.index')
             ->with('success', 'Dusun berhasil diperbarui.');
@@ -65,6 +83,10 @@ class DusunController extends Controller
 
     public function destroy(Dusun $dusun)
     {
+        if ($dusun->foto_kepala && Storage::disk('public')->exists($dusun->foto_kepala)) {
+            Storage::disk('public')->delete($dusun->foto_kepala);
+        }
+
         $dusun->delete();
 
         return redirect()->route('master.dusun.index')

@@ -79,55 +79,78 @@ const formatDate = (d) => {
 </script>
 
 <template>
-    <Head title="Daftar Laporan" />
+    <Head title="Daftar Laporan Aspirasi" />
 
     <AuthenticatedLayout>
         <template #header>
-            <h1 class="text-xl font-bold tracking-tight text-surface-900 dark:text-surface-50">Daftar Laporan Aspirasi</h1>
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight text-surface-900 dark:text-surface-50">
+                        Daftar Laporan Aspirasi
+                    </h1>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 font-medium">
+                        Kelola dan pantau seluruh aduan serta aspirasi warga Desa Sirnaputra
+                    </p>
+                </div>
+                <Link :href="route('laporan.create')" class="btn-primary text-xs sm:text-sm shrink-0">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    <span class="hidden sm:inline">Buat Laporan Baru</span>
+                    <span class="sm:hidden">Buat</span>
+                </Link>
+            </div>
         </template>
 
-        <!-- Filter Bar -->
-        <div class="card p-4 sm:p-5 mb-5 mx-4 sm:mx-0 mt-3 sm:mt-0 rounded-2xl">
-            <div class="flex flex-col sm:flex-row gap-3">
-                <div class="flex-1">
+        <!-- Filter Bar Card -->
+        <div class="card p-4 sm:p-5 mb-5 mx-4 sm:mx-0 rounded-2xl">
+            <div class="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+                <!-- Search Input with Icon -->
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-surface-400">
+                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                        </svg>
+                    </div>
                     <input
                         v-model="search"
                         type="text"
-                        class="input-field"
-                        placeholder="Cari judul atau isi laporan..."
+                        class="input-field pl-10"
+                        placeholder="Cari kata kunci judul atau isi laporan..."
                     />
                 </div>
-                <select v-if="!isKepalaDusun" v-model="dusunId" class="input-field sm:w-44">
-                    <option value="">Semua Dusun</option>
-                    <option v-for="d in dusunList" :key="d.id" :value="d.id">{{ d.nama }}</option>
-                </select>
-                <select v-model="kategoriId" class="input-field sm:w-44">
-                    <option value="">Semua Kategori</option>
-                    <option v-for="k in kategoriList" :key="k.id" :value="k.id">{{ k.nama }}</option>
-                </select>
-                <select v-model="status" class="input-field sm:w-40">
-                    <option value="">Semua Status</option>
-                    <option value="baru">Baru</option>
-                    <option value="diproses">Diproses</option>
-                    <option value="selesai">Selesai</option>
-                    <option value="ditolak">Ditolak</option>
-                </select>
-                <button @click="resetFilters" class="btn-ghost text-xs font-semibold whitespace-nowrap px-4">
-                    Reset Filter
-                </button>
+
+                <!-- Filters dropdown grid -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 lg:flex lg:items-center">
+                    <select v-if="!isKepalaDusun" v-model="dusunId" class="input-field text-xs sm:text-sm lg:w-44">
+                        <option value="">Semua Dusun</option>
+                        <option v-for="d in dusunList" :key="d.id" :value="d.id">{{ d.nama }}</option>
+                    </select>
+
+                    <select v-model="kategoriId" class="input-field text-xs sm:text-sm lg:w-44">
+                        <option value="">Semua Kategori</option>
+                        <option v-for="k in kategoriList" :key="k.id" :value="k.id">{{ k.nama }}</option>
+                    </select>
+
+                    <select v-model="status" class="input-field text-xs sm:text-sm col-span-2 sm:col-span-1 lg:w-36">
+                        <option value="">Semua Status</option>
+                        <option value="baru">Baru</option>
+                        <option value="diproses">Diproses</option>
+                        <option value="selesai">Selesai</option>
+                        <option value="ditolak">Ditolak</option>
+                    </select>
+
+                    <button @click="resetFilters" class="btn-ghost text-xs font-semibold whitespace-nowrap col-span-2 sm:col-span-3 lg:col-span-1">
+                        Reset Filter
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Table Card Container -->
         <div class="card rounded-2xl overflow-hidden mx-4 sm:mx-0">
             <div class="px-5 py-4 border-b border-surface-200/80 dark:border-surface-700/80 flex items-center justify-between gap-4">
-                <p class="text-sm font-semibold text-surface-600 dark:text-surface-400">
-                    Total <span class="font-bold text-surface-900 dark:text-surface-100">{{ laporan.total }}</span> laporan ditemukan
+                <p class="text-xs sm:text-sm font-medium text-surface-500 dark:text-surface-400">
+                    Menampilkan total <span class="font-bold text-surface-900 dark:text-surface-100">{{ laporan.total }}</span> laporan
                 </p>
-                <Link :href="route('laporan.create')" class="btn-primary text-xs sm:text-sm">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    <span>Buat Laporan Baru</span>
-                </Link>
             </div>
 
             <!-- Desktop Table -->
@@ -146,35 +169,60 @@ const formatDate = (d) => {
                     </thead>
                     <tbody>
                         <tr v-for="item in laporan.data" :key="item.id">
-                            <td>
-                                <Link :href="route('laporan.show', item.id)" class="text-primary-600 hover:text-primary-700 font-medium">
+                            <td class="max-w-xs font-semibold">
+                                <Link
+                                    :href="route('laporan.show', item.id)"
+                                    class="text-surface-900 hover:text-primary-700 dark:text-surface-100 dark:hover:text-primary-400 transition-colors line-clamp-2"
+                                >
                                     {{ item.judul }}
                                 </Link>
                             </td>
-                            <td>{{ item.dusun?.nama || '-' }}</td>
                             <td>
-                                {{ item.kategori?.nama || '-' }}
-                                <span v-if="item.subkategori" class="text-xs text-surface-400 block">{{ item.subkategori.nama }}</span>
+                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-surface-700 dark:text-surface-300 bg-surface-100 dark:bg-surface-700/60 px-2.5 py-1 rounded-lg">
+                                    📍 {{ item.dusun?.nama || '-' }}
+                                </span>
                             </td>
-                            <td class="text-surface-500">{{ item.user?.name || '-' }}</td>
-                            <td class="text-surface-500 whitespace-nowrap">{{ formatDate(item.tanggal) }}</td>
-                            <td><StatusBadge :status="item.status" /></td>
+                            <td>
+                                <div>
+                                    <span class="inline-flex items-center gap-1 text-xs font-semibold text-primary-800 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-100 dark:border-primary-900/60 px-2.5 py-1 rounded-lg">
+                                        🏷️ {{ item.kategori?.nama || '-' }}
+                                    </span>
+                                    <span v-if="item.subkategori" class="text-[11px] text-surface-500 dark:text-surface-400 block mt-0.5">
+                                        {{ item.subkategori.nama }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="text-xs font-medium text-surface-600 dark:text-surface-400">
+                                {{ item.user?.name || '-' }}
+                            </td>
+                            <td class="text-xs font-medium text-surface-500 whitespace-nowrap">
+                                {{ formatDate(item.tanggal) }}
+                            </td>
+                            <td>
+                                <StatusBadge :status="item.status" />
+                            </td>
                             <td class="text-right">
                                 <div class="flex items-center justify-end gap-1">
-                                    <Link :href="route('laporan.show', item.id)" class="btn-ghost text-xs py-1.5 px-2">
+                                    <Link
+                                        :href="route('laporan.show', item.id)"
+                                        class="btn-ghost text-xs py-1.5 px-2.5 font-bold"
+                                        title="Detail"
+                                    >
                                         Detail
                                     </Link>
                                     <Link
                                         v-if="item.status === 'baru' && item.user_id === user.id"
                                         :href="route('laporan.edit', item.id)"
-                                        class="btn-ghost text-xs py-1.5 px-2"
+                                        class="btn-ghost text-xs py-1.5 px-2.5 font-bold text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                                        title="Edit"
                                     >
                                         Edit
                                     </Link>
                                     <button
                                         v-if="canDelete(item)"
                                         @click="confirmDelete(item)"
-                                        class="btn-ghost text-xs py-1.5 px-2 text-red-600 hover:bg-red-50"
+                                        class="btn-ghost text-xs py-1.5 px-2.5 font-bold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40"
+                                        title="Hapus"
                                     >
                                         Hapus
                                     </button>
@@ -182,64 +230,61 @@ const formatDate = (d) => {
                             </td>
                         </tr>
                         <tr v-if="!laporan.data?.length">
-                            <td colspan="7" class="text-center text-surface-400 dark:text-surface-500 py-8">Tidak ada laporan ditemukan</td>
+                            <td colspan="7" class="text-center text-surface-400 dark:text-surface-500 py-12 font-medium">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <svg class="w-10 h-10 text-surface-300 dark:text-surface-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                    </svg>
+                                    <span>Tidak ada laporan aduan ditemukan</span>
+                                </div>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
             <!-- Mobile Card List -->
-            <div class="sm:hidden divide-y divide-surface-100 dark:divide-surface-700">
-                <div v-if="!laporan.data?.length" class="py-10 text-center text-surface-400 dark:text-surface-500 text-sm">
-                    Tidak ada laporan ditemukan
+            <div class="sm:hidden divide-y divide-surface-100 dark:divide-surface-700/60">
+                <div v-if="!laporan.data?.length" class="py-10 text-center text-surface-400 dark:text-surface-500 text-sm font-medium">
+                    Tidak ada laporan aduan ditemukan
                 </div>
                 <div
                     v-for="item in laporan.data"
                     :key="item.id"
-                    class="px-4 py-3.5"
+                    class="px-4 py-3.5 space-y-2"
                 >
                     <!-- Judul + Status -->
-                    <div class="flex items-start justify-between gap-2 mb-2">
-                        <Link :href="route('laporan.show', item.id)" class="font-semibold text-sm text-primary-700 dark:text-primary-400 leading-snug flex-1">
+                    <div class="flex items-start justify-between gap-2">
+                        <Link :href="route('laporan.show', item.id)" class="font-bold text-sm text-surface-900 dark:text-surface-100 leading-snug flex-1">
                             {{ item.judul }}
                         </Link>
                         <StatusBadge :status="item.status" />
                     </div>
-                    <!-- Meta info -->
-                    <div class="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-surface-500 dark:text-surface-400 mb-3">
-                        <div v-if="item.dusun" class="flex items-center gap-1">
-                            <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
-                            <span>{{ item.dusun.nama }}</span>
-                        </div>
-                        <div v-if="item.kategori" class="flex items-center gap-1">
-                            <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.568 3H5.25A2.25 2.25 0 003 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 005.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 009.568 3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M6 6h.008v.008H6V6z" /></svg>
-                            <span>{{ item.kategori.nama }}<template v-if="item.subkategori"> / {{ item.subkategori.nama }}</template></span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" /></svg>
-                            <span>{{ item.user?.name || '-' }}</span>
-                        </div>
-                        <div class="flex items-center gap-1">
-                            <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 9v7.5" /></svg>
-                            <span>{{ formatDate(item.tanggal) }}</span>
-                        </div>
+
+                    <!-- Meta info chips -->
+                    <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-surface-500 dark:text-surface-400">
+                        <span v-if="item.dusun">📍 {{ item.dusun.nama }}</span>
+                        <span v-if="item.kategori">🏷️ {{ item.kategori.nama }}<template v-if="item.subkategori"> / {{ item.subkategori.nama }}</template></span>
+                        <span>👤 {{ item.user?.name || '-' }}</span>
+                        <span class="ml-auto">📅 {{ formatDate(item.tanggal) }}</span>
                     </div>
+
                     <!-- Actions -->
-                    <div class="flex items-center gap-2">
-                        <Link :href="route('laporan.show', item.id)" class="btn-ghost text-xs py-1.5 px-3">
+                    <div class="flex items-center gap-2 pt-1 border-t border-surface-100 dark:border-surface-700/40">
+                        <Link :href="route('laporan.show', item.id)" class="btn-ghost text-xs py-1.5 px-3 font-bold">
                             Detail
                         </Link>
                         <Link
                             v-if="item.status === 'baru' && item.user_id === user.id"
                             :href="route('laporan.edit', item.id)"
-                            class="btn-ghost text-xs py-1.5 px-3"
+                            class="btn-ghost text-xs py-1.5 px-3 font-bold text-amber-600 dark:text-amber-400"
                         >
                             Edit
                         </Link>
                         <button
                             v-if="canDelete(item)"
                             @click="confirmDelete(item)"
-                            class="btn-ghost text-xs py-1.5 px-3 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 ml-auto"
+                            class="btn-ghost text-xs py-1.5 px-3 font-bold text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 ml-auto"
                         >
                             Hapus
                         </button>
@@ -247,7 +292,8 @@ const formatDate = (d) => {
                 </div>
             </div>
 
-            <div class="px-5 py-3">
+            <!-- Pagination -->
+            <div class="px-5 py-4 border-t border-surface-200/80 dark:border-surface-700/80">
                 <Pagination :links="laporan" />
             </div>
         </div>
@@ -255,8 +301,9 @@ const formatDate = (d) => {
         <ConfirmModal
             ref="deleteModal"
             title="Hapus Laporan"
-            :message="`Yakin ingin menghapus laporan '${deleteTarget?.judul}'?`"
+            :message="`Apakah Anda yakin ingin menghapus laporan '${deleteTarget?.judul}'?`"
             @confirm="handleDelete"
         />
     </AuthenticatedLayout>
 </template>
+

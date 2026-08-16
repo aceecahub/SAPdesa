@@ -30,11 +30,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Laporan (semua role bisa akses, scope di controller)
+    Route::post('/laporan/{laporan}', [LaporanController::class, 'update']);
     Route::resource('laporan', LaporanController::class);
     Route::patch('/laporan/{laporan}/status', [LaporanController::class, 'updateStatus'])->name('laporan.updateStatus');
 
     // Master Data (admin + superadmin)
     Route::middleware('role:superadmin,admin')->prefix('master')->name('master.')->group(function () {
+        Route::post('dusun/{dusun}', [DusunController::class, 'update']);
         Route::resource('dusun', DusunController::class)->names('dusun');
         Route::resource('kategori', KategoriController::class)->names('kategori');
         Route::resource('subkategori', \App\Http\Controllers\SubkategoriController::class)->names('subkategori')->except(['show']);

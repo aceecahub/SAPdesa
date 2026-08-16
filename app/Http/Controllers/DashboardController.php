@@ -80,13 +80,31 @@ class DashboardController extends Controller
         $totalUsers = $user->isSuperadmin() ? User::count() : null;
         $totalDusun = Dusun::count();
 
+        // Additional KPI metrics
+        $selesaiCount = $statusCounts['selesai'] ?? 0;
+        $rateSelesai = $totalLaporan > 0 ? round(($selesaiCount / $totalLaporan) * 100, 1) : 0;
+
+        $laporanBulanIni = (clone $query)->whereYear('tanggal', now()->year)->whereMonth('tanggal', now()->month)->count();
+        $laporanBulanLalu = (clone $query)->whereYear('tanggal', now()->subMonth()->year)->whereMonth('tanggal', now()->subMonth()->month)->count();
+        
+        $trenBulanIni = 0;
+        if ($laporanBulanLalu > 0) {
+            $trenBulanIni = round((($laporanBulanIni - $laporanBulanLalu) / $laporanBulanLalu) * 100, 1);
+        } elseif ($laporanBulanIni > 0) {
+            $trenBulanIni = 100;
+        }
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'total' => $totalLaporan,
                 'baru' => $statusCounts['baru'] ?? 0,
                 'diproses' => $statusCounts['diproses'] ?? 0,
-                'selesai' => $statusCounts['selesai'] ?? 0,
+                'selesai' => $selesaiCount,
                 'ditolak' => $statusCounts['ditolak'] ?? 0,
+                'rateSelesai' => $rateSelesai,
+                'laporanBulanIni' => $laporanBulanIni,
+                'laporanBulanLalu' => $laporanBulanLalu,
+                'trenBulanIni' => $trenBulanIni,
                 'totalUsers' => $totalUsers,
                 'totalDusun' => $totalDusun,
             ],

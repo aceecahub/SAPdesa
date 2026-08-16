@@ -246,12 +246,12 @@ const roleLabel = computed(() => {
         <!-- Main content area -->
         <div class="lg:pl-64 min-h-screen flex flex-col">
             <!-- Glassmorphism Topbar -->
-            <header class="h-16 bg-white/80 dark:bg-surface-800/80 backdrop-blur-md border-b border-surface-200/80 dark:border-surface-700/80 flex items-center justify-between px-4 sm:px-6 shrink-0 sticky top-0 z-30 transition-colors duration-200">
+            <header class="min-h-[4rem] bg-white/80 dark:bg-surface-800/80 backdrop-blur-md border-b border-surface-200/80 dark:border-surface-700/80 flex items-center justify-between px-4 sm:px-6 shrink-0 sticky top-0 z-30 transition-colors duration-200 py-2">
                 <!-- Mobile empty spacer -->
-                <div class="lg:hidden w-6"></div>
+                <div class="lg:hidden w-2"></div>
 
                 <!-- Page title slot -->
-                <div class="flex-1 min-w-0 lg:ml-0 ml-2">
+                <div class="flex-1 min-w-0 lg:ml-0 ml-1 pr-2 overflow-hidden">
                     <slot name="header" />
                 </div>
 
