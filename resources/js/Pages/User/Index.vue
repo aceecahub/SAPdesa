@@ -50,19 +50,20 @@ const roleLabel = (role) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h1 class="text-lg font-semibold text-surface-900">Kelola User</h1>
+            <h1 class="text-xl font-bold tracking-tight text-surface-900 dark:text-surface-50">Kelola Pengguna</h1>
         </template>
 
-        <div class="card">
-            <div class="px-5 py-4 border-b border-surface-200 flex items-center justify-between">
-                <p class="text-sm text-surface-500">{{ users.total }} pengguna terdaftar</p>
-                <Link :href="route('user.create')" class="btn-primary">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    Tambah User
+        <div class="card rounded-2xl overflow-hidden mx-4 sm:mx-0 mt-3 sm:mt-0">
+            <div class="px-5 py-4 border-b border-surface-200/80 dark:border-surface-700/80 flex items-center justify-between gap-4">
+                <p class="text-sm font-semibold text-surface-600 dark:text-surface-400">Total <span class="font-bold text-surface-900 dark:text-surface-100">{{ users.total }}</span> pengguna terdaftar</p>
+                <Link :href="route('user.create')" class="btn-primary text-xs sm:text-sm">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    <span>Tambah User Baru</span>
                 </Link>
             </div>
 
-            <div class="table-container">
+            <!-- Desktop Table -->
+            <div class="hidden sm:block table-container border-0 rounded-none">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -103,6 +104,47 @@ const roleLabel = (role) => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card List -->
+            <div class="sm:hidden divide-y divide-surface-100 dark:divide-surface-700">
+                <div
+                    v-for="item in users.data"
+                    :key="item.id"
+                    class="px-4 py-3.5"
+                >
+                    <!-- Nama + Role -->
+                    <div class="flex items-start justify-between gap-2 mb-1.5">
+                        <div>
+                            <p class="font-semibold text-sm text-surface-900 dark:text-surface-100">
+                                {{ item.name }}
+                                <span v-if="item.id === currentUser?.id" class="text-xs text-surface-400 dark:text-surface-500 font-normal ml-1">(Anda)</span>
+                            </p>
+                            <p class="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{{ item.email }}</p>
+                        </div>
+                        <span :class="['inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded flex-shrink-0', roleBadge(item.role)]">
+                            {{ roleLabel(item.role) }}
+                        </span>
+                    </div>
+                    <!-- Dusun -->
+                    <div v-if="item.dusun" class="flex items-center gap-1 text-xs text-surface-500 dark:text-surface-400 mb-3">
+                        <svg class="w-3 h-3 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" /></svg>
+                        <span>{{ item.dusun.nama }}</span>
+                    </div>
+                    <!-- Actions -->
+                    <div class="flex items-center gap-2">
+                        <Link :href="route('user.edit', item.id)" class="btn-ghost text-xs py-1.5 px-3">
+                            Edit
+                        </Link>
+                        <button
+                            v-if="item.id !== currentUser?.id"
+                            @click="confirmDelete(item)"
+                            class="btn-ghost text-xs py-1.5 px-3 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 ml-auto"
+                        >
+                            Hapus
+                        </button>
+                    </div>
+                </div>
             </div>
 
             <div class="px-5 py-3">

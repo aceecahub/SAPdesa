@@ -35,20 +35,21 @@ const handleDelete = () => {
                         <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                     </svg>
                 </Link>
-                <h1 class="text-lg font-semibold text-surface-900">Data Subkategori</h1>
+                <h1 class="text-xl font-bold tracking-tight text-surface-900 dark:text-surface-50">Data Subkategori</h1>
             </div>
         </template>
 
-        <div class="card">
-            <div class="px-5 py-4 border-b border-surface-200 flex items-center justify-between">
-                <p class="text-sm text-surface-500">Kelola subkategori untuk setiap kategori laporan</p>
-                <Link :href="route('master.subkategori.create')" class="btn-primary">
-                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
-                    Tambah
+        <div class="card rounded-2xl overflow-hidden mx-4 sm:mx-0 mt-3 sm:mt-0">
+            <div class="px-5 py-4 border-b border-surface-200/80 dark:border-surface-700/80 flex items-center justify-between gap-4">
+                <p class="text-sm font-semibold text-surface-600 dark:text-surface-400">Kelola subkategori untuk setiap kategori laporan</p>
+                <Link :href="route('master.subkategori.create')" class="btn-primary text-xs sm:text-sm">
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg>
+                    <span>Tambah Subkategori</span>
                 </Link>
             </div>
 
-            <div class="table-container">
+            <!-- Desktop Table -->
+            <div class="hidden sm:block table-container border-0 rounded-none">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -81,6 +82,40 @@ const handleDelete = () => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+
+            <!-- Mobile Card List -->
+            <div class="sm:hidden divide-y divide-surface-100 dark:divide-surface-700">
+                <div v-if="!subkategori.data?.length" class="py-10 text-center text-surface-400 dark:text-surface-500 text-sm">
+                    Belum ada data subkategori
+                </div>
+                <div
+                    v-for="(item, i) in subkategori.data"
+                    :key="item.id"
+                    class="px-4 py-3.5"
+                >
+                    <!-- Nama + Actions -->
+                    <div class="flex items-center justify-between gap-2 mb-1.5">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs text-surface-400 dark:text-surface-500 w-5 text-right flex-shrink-0">{{ (subkategori.current_page - 1) * subkategori.per_page + i + 1 }}.</span>
+                            <div>
+                                <p class="font-semibold text-sm text-surface-900 dark:text-surface-100">{{ item.nama }}</p>
+                                <p class="text-xs text-surface-500 dark:text-surface-400">{{ item.kategori?.nama || '-' }}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <Link :href="route('master.subkategori.edit', item.id)" class="btn-ghost text-xs py-1 px-2.5">
+                                Edit
+                            </Link>
+                            <button @click="confirmDelete(item)" class="btn-ghost text-xs py-1 px-2.5 text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20">
+                                Hapus
+                            </button>
+                        </div>
+                    </div>
+                    <div class="pl-7">
+                        <code class="text-xs bg-surface-100 dark:bg-surface-700 text-surface-500 dark:text-surface-400 px-1.5 py-0.5 rounded">{{ item.slug }}</code>
+                    </div>
+                </div>
             </div>
 
             <div class="px-5 py-3">

@@ -3,6 +3,7 @@ import forms from '@tailwindcss/forms';
 
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'class',
     content: [
         './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
         './storage/framework/views/*.php',
@@ -30,16 +31,16 @@ export default {
                     950: '#102712',
                 },
                 surface: {
-                    50: '#fdfbf7', // Crisp clean cream
+                    50: '#fdfbf7',  // Crisp clean cream
                     100: '#f5f4ef',
                     200: '#e5e4df',
                     300: '#d4d2cc',
                     400: '#9e9c96',
                     500: '#71706b',
                     600: '#52514c',
-                    700: '#43423e',
-                    800: '#2d3748', // Charcoal grey for text
-                    900: '#1a1f29',
+                    700: '#383836', // dark card hover / input bg dark
+                    800: '#252525', // dark card bg
+                    900: '#171717', // dark page bg
                 },
                 sage: '#e8efe9',
                 wood: '#8c6239',
