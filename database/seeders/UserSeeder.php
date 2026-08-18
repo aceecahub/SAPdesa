@@ -32,11 +32,12 @@ class UserSeeder extends Seeder
         foreach (['Dusun 1', 'Dusun 2', 'Dusun 3', 'Dusun 4'] as $i => $nama) {
             User::create([
                 'name' => "Kepala $nama",
-                'email' => "kepala-dusun".($i+1)."@sapdesa.test",
+                'email' => "kadus" . ($i + 1) . "@gmail.com",
                 'password' => Hash::make('password'),
                 'role' => 'kepala_dusun',
                 'dusun_id' => $dusun[$nama]->id,
             ]);
         }
+
     }
 }

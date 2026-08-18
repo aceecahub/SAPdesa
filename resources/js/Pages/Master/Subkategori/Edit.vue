@@ -1,15 +1,12 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { watch } from 'vue';
 
 const props = defineProps({
     subkategori: Object,
-    kategoriList: Array,
 });
 
 const form = useForm({
-    kategori_id: props.subkategori.kategori_id,
     nama: props.subkategori.nama,
     slug: props.subkategori.slug,
 });
@@ -24,21 +21,12 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h1 class="text-lg font-semibold text-surface-900">Edit Subkategori</h1>
+            <h1 class="text-lg font-semibold text-surface-900 dark:text-surface-50">Edit Subkategori</h1>
         </template>
 
         <div class="max-w-2xl">
             <div class="card p-6">
                 <form @submit.prevent="submit" class="space-y-5">
-                    <div>
-                        <label class="label-text">Kategori Induk <span class="text-red-500">*</span></label>
-                        <select v-model="form.kategori_id" class="input-field">
-                            <option value="">Pilih kategori...</option>
-                            <option v-for="k in kategoriList" :key="k.id" :value="k.id">{{ k.nama }}</option>
-                        </select>
-                        <p v-if="form.errors.kategori_id" class="text-sm text-red-600 mt-1">{{ form.errors.kategori_id }}</p>
-                    </div>
-
                     <div>
                         <label class="label-text">Nama Subkategori <span class="text-red-500">*</span></label>
                         <input v-model="form.nama" type="text" class="input-field" />

@@ -1,11 +1,13 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import FileUpload from '@/Components/FileUpload.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 
 const props = defineProps({
     laporan: Object,
     kategoriList: Array,
+    subkategoriList: Array,
 });
 
 const form = useForm({
@@ -17,24 +19,10 @@ const form = useForm({
     _method: 'PUT',
 });
 
-const subkategoriList = computed(() => {
-    if (!form.kategori_id) return [];
-    const kat = props.kategoriList.find(k => k.id === form.kategori_id);
-    return kat ? (kat.subkategori || []) : [];
-});
-
-watch(() => form.kategori_id, () => {
-    form.subkategori_id = '';
-});
-
 const submit = () => {
     form.post(route('laporan.update', props.laporan.id), {
         forceFormData: true,
     });
-};
-
-const handleFile = (e) => {
-    form.lampiran = e.target.files[0];
 };
 </script>
 
@@ -90,9 +78,9 @@ const handleFile = (e) => {
                                 {{ form.errors.kategori_id }}
                             </p>
                         </div>
-                        <div v-if="subkategoriList.length > 0">
+                        <div v-if="subkategoriList && subkategoriList.length > 0">
                             <label class="label-text">
-                                Subkategori <span class="text-rose-500">*</span>
+                                Subkategori <span class="text-surface-400 font-normal">(Opsional)</span>
                             </label>
                             <select v-model="form.subkategori_id" class="input-field">
                                 <option value="">-- Pilih Subkategori --</option>
@@ -114,21 +102,12 @@ const handleFile = (e) => {
                         </p>
                     </div>
 
-                    <div>
-                        <label class="label-text">Ganti Lampiran File (Opsional)</label>
-                        <input
-                            type="file"
-                            @change="handleFile"
-                            class="block w-full text-xs text-surface-500 file:mr-4 file:py-2 file:px-4 file:border file:border-surface-200 dark:file:border-surface-700 file:rounded-xl file:text-xs file:font-bold file:bg-surface-100 dark:file:bg-surface-700 file:text-surface-700 dark:file:text-surface-200 hover:file:bg-surface-200 dark:hover:file:bg-surface-600 file:cursor-pointer file:transition-colors"
-                            accept=".jpg,.jpeg,.png,.pdf,.doc,.docx"
-                        />
-                        <p v-if="laporan.lampiran" class="text-xs font-medium text-surface-500 dark:text-surface-400 mt-1.5">
-                            📎 Lampiran saat ini: <strong class="text-surface-800 dark:text-surface-200">{{ laporan.lampiran.split('/').pop() }}</strong>
-                        </p>
-                        <p v-if="form.errors.lampiran" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">
-                            {{ form.errors.lampiran }}
-                        </p>
-                    </div>
+                    <FileUpload
+                        v-model="form.lampiran"
+                        :existing-url="laporan.lampiran"
+                        label="Lampiran Foto / Berkas Pendukung (Opsional)"
+                        :error="form.errors.lampiran"
+                    />
 
                     <div class="flex items-center justify-end gap-3 pt-4 border-t border-surface-100 dark:border-surface-700/60">
                         <Link :href="route('laporan.show', laporan.id)" class="btn-secondary text-xs font-bold">

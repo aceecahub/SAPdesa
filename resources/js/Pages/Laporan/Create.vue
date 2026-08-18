@@ -1,10 +1,12 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import FileUpload from '@/Components/FileUpload.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
 import { computed, watch } from 'vue';
 
 const props = defineProps({
     kategoriList: Array,
+    subkategoriList: Array,
     dusunList: Array,
 });
 
@@ -21,24 +23,10 @@ const form = useForm({
     lampiran: null,
 });
 
-const subkategoriList = computed(() => {
-    if (!form.kategori_id) return [];
-    const kat = props.kategoriList.find(k => k.id === form.kategori_id);
-    return kat ? (kat.subkategori || []) : [];
-});
-
-watch(() => form.kategori_id, () => {
-    form.subkategori_id = '';
-});
-
 const submit = () => {
     form.post(route('laporan.store'), {
         forceFormData: true,
     });
-};
-
-const handleFile = (e) => {
-    form.lampiran = e.target.files[0];
 };
 </script>
 
@@ -102,9 +90,9 @@ const handleFile = (e) => {
                             </p>
                         </div>
 
-                        <div v-if="subkategoriList.length > 0">
+                        <div v-if="subkategoriList && subkategoriList.length > 0">
                             <label class="label-text">
-                                Subkategori <span class="text-rose-500">*</span>
+                                Subkategori <span class="text-surface-400 font-normal">(Opsional)</span>
                             </label>
                             <select v-model="form.subkategori_id" class="input-field">
                                 <option value="">-- Pilih Subkategori --</option>
@@ -155,31 +143,11 @@ const handleFile = (e) => {
                         </p>
                     </div>
 
-                    <!-- Lampiran File -->
-                    <div>
-                        <label class="label-text">Lampiran Foto / Berkas Pendukung (Opsional)</label>
-                        <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-surface-200 dark:border-surface-700 border-dashed rounded-2xl bg-surface-50/50 dark:bg-surface-900/30 hover:border-primary-500/50 transition-colors">
-                            <div class="space-y-1 text-center">
-                                <svg class="mx-auto h-10 w-10 text-surface-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <div class="flex text-xs text-surface-600 dark:text-surface-400">
-                                    <label class="relative cursor-pointer font-bold text-primary-700 dark:text-primary-400 hover:underline">
-                                        <span>Unggah foto/berkas</span>
-                                        <input type="file" @change="handleFile" class="sr-only" accept=".jpg,.jpeg,.png,.pdf,.doc,.docx" />
-                                    </label>
-                                    <p class="pl-1">atau tarik dan lepas di sini</p>
-                                </div>
-                                <p class="text-[11px] text-surface-400">Format: JPG, PNG, PDF, DOC (Maks: 5MB)</p>
-                                <p v-if="form.lampiran" class="text-xs font-bold text-primary-700 dark:text-primary-400 pt-2">
-                                    ✓ Berkas terpilih: {{ form.lampiran.name }}
-                                </p>
-                            </div>
-                        </div>
-                        <p v-if="form.errors.lampiran" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">
-                            {{ form.errors.lampiran }}
-                        </p>
-                    </div>
+                    <FileUpload
+                        v-model="form.lampiran"
+                        label="Lampiran Foto / Berkas Pendukung (Opsional)"
+                        :error="form.errors.lampiran"
+                    />
 
                     <!-- Footer Actions -->
                     <div class="flex items-center justify-end gap-3 pt-4 border-t border-surface-100 dark:border-surface-700/60">

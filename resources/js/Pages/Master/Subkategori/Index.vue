@@ -45,7 +45,7 @@ const handleDelete = () => {
                             Data Subkategori Laporan
                         </h1>
                         <p class="text-xs text-surface-500 dark:text-surface-400 font-medium">
-                            Rincian detail jenis pengaduan per kategori utama
+                            Rincian detail jenis subkategori laporan (global)
                         </p>
                     </div>
                 </div>
@@ -69,7 +69,6 @@ const handleDelete = () => {
                     <thead>
                         <tr>
                             <th class="w-12 text-center">No</th>
-                            <th>Kategori Induk</th>
                             <th>Nama Subkategori</th>
                             <th>Kode Slug</th>
                             <th class="text-right">Aksi</th>
@@ -79,11 +78,6 @@ const handleDelete = () => {
                         <tr v-for="(item, i) in subkategori.data" :key="item.id">
                             <td class="text-center font-bold text-xs text-surface-400">
                                 {{ (subkategori.current_page - 1) * subkategori.per_page + i + 1 }}
-                            </td>
-                            <td>
-                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-primary-800 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-100 dark:border-primary-900/60 px-2.5 py-1 rounded-lg">
-                                    🏷️ {{ item.kategori?.nama || '-' }}
-                                </span>
                             </td>
                             <td>
                                 <span class="font-bold text-surface-900 dark:text-surface-100 text-sm">
@@ -107,7 +101,7 @@ const handleDelete = () => {
                             </td>
                         </tr>
                         <tr v-if="!subkategori.data?.length">
-                            <td colspan="5" class="text-center text-surface-400 dark:text-surface-500 py-12 font-medium">
+                            <td colspan="4" class="text-center text-surface-400 dark:text-surface-500 py-12 font-medium">
                                 Belum ada data subkategori
                             </td>
                         </tr>
@@ -129,9 +123,6 @@ const handleDelete = () => {
                         <div>
                             <span class="font-bold text-sm text-surface-900 dark:text-surface-100 block">
                                 {{ item.nama }}
-                            </span>
-                            <span class="text-xs font-semibold text-primary-700 dark:text-primary-400">
-                                🏷️ {{ item.kategori?.nama || '-' }}
                             </span>
                         </div>
                         <div class="flex items-center gap-1">

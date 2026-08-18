@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Laporan;
 use App\Models\Kategori;
+use App\Models\Subkategori;
 use App\Models\Dusun;
 use App\Models\TindakLanjut;
 use Illuminate\Http\Request;
@@ -59,7 +60,8 @@ class LaporanController extends Controller
         }
 
         return Inertia::render('Laporan/Create', [
-            'kategoriList' => Kategori::with('subkategori')->get(),
+            'kategoriList' => Kategori::all(),
+            'subkategoriList' => Subkategori::all(),
             'dusunList' => $user->isKepalaDusun() ? collect([$user->dusun]) : Dusun::all(),
         ]);
     }
@@ -68,17 +70,11 @@ class LaporanController extends Controller
     {
         $user = Auth::user();
 
-        $hasSubkategori = false;
-        if ($request->kategori_id) {
-            $kategori = Kategori::with('subkategori')->find($request->kategori_id);
-            $hasSubkategori = $kategori && $kategori->subkategori->count() > 0;
-        }
-
         $request->validate([
             'judul' => 'required|string|max:255',
             'isi' => 'required|string',
             'kategori_id' => 'required|exists:kategori,id',
-            'subkategori_id' => $hasSubkategori ? 'required|exists:subkategori,id' : 'nullable|exists:subkategori,id',
+            'subkategori_id' => 'nullable|exists:subkategori,id',
             'lampiran' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
         ]);
 
@@ -146,7 +142,8 @@ class LaporanController extends Controller
 
         return Inertia::render('Laporan/Edit', [
             'laporan' => $laporan,
-            'kategoriList' => Kategori::with('subkategori')->get(),
+            'kategoriList' => Kategori::all(),
+            'subkategoriList' => Subkategori::all(),
         ]);
     }
 
@@ -164,17 +161,11 @@ class LaporanController extends Controller
                 ->with('error', 'Laporan hanya bisa diedit saat status masih Baru.');
         }
 
-        $hasSubkategori = false;
-        if ($request->kategori_id) {
-            $kategori = Kategori::with('subkategori')->find($request->kategori_id);
-            $hasSubkategori = $kategori && $kategori->subkategori->count() > 0;
-        }
-
         $request->validate([
             'judul' => 'required|string|max:255',
             'isi' => 'required|string',
             'kategori_id' => 'required|exists:kategori,id',
-            'subkategori_id' => $hasSubkategori ? 'required|exists:subkategori,id' : 'nullable|exists:subkategori,id',
+            'subkategori_id' => 'nullable|exists:subkategori,id',
             'lampiran' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
         ]);
 

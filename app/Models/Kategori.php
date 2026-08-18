@@ -13,9 +13,4 @@ class Kategori extends Model
     {
         return $this->hasMany(Laporan::class);
     }
-
-    public function subkategori()
-    {
-        return $this->hasMany(Subkategori::class);
-    }
 }
