@@ -115,7 +115,7 @@ const isImage = computed(() => {
                         <div class="space-y-2">
                             <div class="flex flex-wrap items-center gap-2">
                                 <span class="inline-flex items-center gap-1 text-xs font-semibold text-surface-700 dark:text-surface-300 bg-surface-100 dark:bg-surface-700/60 px-2.5 py-1 rounded-lg">
-                                    📍 Dusun {{ laporan.dusun?.nama || '-' }}
+                                    📍 RW {{ laporan.rw ? String(laporan.rw.nomor).padStart(2, '0') : '-' }} – Dusun {{ laporan.rw?.dusun?.nama || '-' }}
                                 </span>
                                 <span class="inline-flex items-center gap-1 text-xs font-semibold text-primary-800 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-100 dark:border-primary-900/60 px-2.5 py-1 rounded-lg">
                                     🏷️ {{ laporan.kategori?.nama || '-' }}
@@ -253,8 +253,12 @@ const isImage = computed(() => {
                             <dd class="font-bold text-surface-900 dark:text-surface-100">{{ laporan.user?.name }}</dd>
                         </div>
                         <div class="flex justify-between items-center">
-                            <dt class="text-surface-500">Wilayah Dusun</dt>
-                            <dd class="font-bold text-surface-900 dark:text-surface-100">{{ laporan.dusun?.nama }}</dd>
+                            <dt class="text-surface-500">Wilayah RW</dt>
+                            <dd class="font-bold text-surface-900 dark:text-surface-100">RW {{ laporan.rw ? String(laporan.rw.nomor).padStart(2, '0') : '-' }}</dd>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <dt class="text-surface-500">Dusun Induk</dt>
+                            <dd class="font-bold text-surface-900 dark:text-surface-100">Dusun {{ laporan.rw?.dusun?.nama || '-' }}</dd>
                         </div>
                         <div class="flex justify-between items-start">
                             <dt class="text-surface-500">Kategori</dt>

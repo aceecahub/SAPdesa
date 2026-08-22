@@ -5,6 +5,7 @@ import { watch } from 'vue';
 
 const props = defineProps({
     dusunList: Array,
+    rwList: Array,
 });
 
 const form = useForm({
@@ -12,16 +13,26 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
-    role: 'kepala_dusun',
+    role: 'ketua_rw',
     dusun_id: '',
+    rw_id: '',
 });
 
-// Clear dusun_id when role is not kepala_dusun
 watch(() => form.role, (val) => {
     if (val !== 'kepala_dusun') {
         form.dusun_id = '';
     }
+    if (val !== 'ketua_rw') {
+        form.rw_id = '';
+    }
 });
+
+const formatRwLabel = (rw) => {
+    if (!rw) return '';
+    const rwNum = 'RW ' + String(rw.nomor).padStart(2, '0');
+    const dusunNama = rw.dusun?.nama ? ` – Dusun ${rw.dusun.nama}` : '';
+    return `${rwNum}${dusunNama}`;
+};
 
 const submit = () => {
     form.post(route('user.store'));
@@ -64,17 +75,51 @@ const submit = () => {
                     </div>
 
                     <div>
-                        <label class="label-text">Role <span class="text-red-500">*</span></label>
+                        <label class="label-text">Role / Hak Akses <span class="text-red-500">*</span></label>
                         <select v-model="form.role" class="input-field">
-                            <option value="kepala_dusun">Kepala Dusun</option>
-                            <option value="admin">Admin Desa</option>
-                            <option value="superadmin">Superadmin</option>
+                            <option value="ketua_rw">Ketua RW (Hanya RW miliknya)</option>
+                            <option value="kepala_dusun">Kepala Dusun (Melihat semua RW di dusunnya)</option>
+                            <option value="admin">Admin Desa (Kelola seluruh Laporan & Master Data)</option>
+                            <option value="superadmin">Superadmin (Akses Penuh Sistem & Kelola User)</option>
                         </select>
                         <p v-if="form.errors.role" class="text-sm text-red-600 mt-1">{{ form.errors.role }}</p>
                     </div>
 
+                    <!-- Role Permission Preview Banner -->
+                    <div class="bg-surface-50 dark:bg-surface-800/60 border border-surface-200 dark:border-surface-700/80 rounded-xl p-3.5 text-xs text-surface-600 dark:text-surface-300">
+                        <span class="font-bold text-surface-900 dark:text-surface-100 block mb-1">Rincian Hak Akses (Permission):</span>
+                        <ul v-if="form.role === 'ketua_rw'" class="list-disc list-inside space-y-0.5 text-surface-500 dark:text-surface-400">
+                            <li>Membuat laporan aspirasi untuk RW-nya sendiri.</li>
+                            <li>Melihat & mengedit laporan yang dibuat oleh dirinya sendiri.</li>
+                        </ul>
+                        <ul v-else-if="form.role === 'kepala_dusun'" class="list-disc list-inside space-y-0.5 text-surface-500 dark:text-surface-400">
+                            <li>Melihat daftar RW di bawah dusunnya & mengedit data RW.</li>
+                            <li>Melihat seluruh laporan yang masuk dari seluruh RW di dusunnya.</li>
+                        </ul>
+                        <ul v-else-if="form.role === 'admin'" class="list-disc list-inside space-y-0.5 text-surface-500 dark:text-surface-400">
+                            <li>Akses penuh ke seluruh Laporan, Master Data (Dusun, RW, Kategori).</li>
+                            <li>Mengubah status laporan (Diproses, Selesai, Ditolak) & memberi respon.</li>
+                            <li>Export laporan ke CSV.</li>
+                        </ul>
+                        <ul v-else-if="form.role === 'superadmin'" class="list-disc list-inside space-y-0.5 text-surface-500 dark:text-surface-400">
+                            <li>Hak akses penuh ke seluruh fitur sistem.</li>
+                            <li>Kelola akun pengguna & pengaturan role permission.</li>
+                        </ul>
+                    </div>
+
+                    <div v-if="form.role === 'ketua_rw'">
+                        <label class="label-text">Pilih RW <span class="text-red-500">*</span></label>
+                        <select v-model="form.rw_id" class="input-field">
+                            <option value="">Pilih RW</option>
+                            <option v-for="rw in rwList" :key="rw.id" :value="rw.id">
+                                {{ formatRwLabel(rw) }}
+                            </option>
+                        </select>
+                        <p v-if="form.errors.rw_id" class="text-sm text-red-600 mt-1">{{ form.errors.rw_id }}</p>
+                    </div>
+
                     <div v-if="form.role === 'kepala_dusun'">
-                        <label class="label-text">Dusun <span class="text-red-500">*</span></label>
+                        <label class="label-text">Pilih Dusun <span class="text-red-500">*</span></label>
                         <select v-model="form.dusun_id" class="input-field">
                             <option value="">Pilih dusun</option>
                             <option v-for="d in dusunList" :key="d.id" :value="d.id">{{ d.nama }}</option>

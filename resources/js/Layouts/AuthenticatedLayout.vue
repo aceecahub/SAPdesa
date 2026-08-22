@@ -75,16 +75,26 @@ const navItems = computed(() => {
             href: route('dashboard'),
             icon: 'dashboard',
             active: route().current('dashboard'),
-            roles: ['superadmin', 'admin', 'kepala_dusun'],
+            roles: ['superadmin', 'admin', 'kepala_dusun', 'ketua_rw'],
         },
         {
             label: 'Laporan Aspirasi',
             href: route('laporan.index'),
             icon: 'laporan',
             active: route().current('laporan.*'),
-            roles: ['superadmin', 'admin', 'kepala_dusun'],
+            roles: ['superadmin', 'admin', 'kepala_dusun', 'ketua_rw'],
         },
     ];
+
+    if (['superadmin', 'admin', 'kepala_dusun'].includes(role.value)) {
+        items.push({
+            label: 'Data RW',
+            href: route('master.rw.index'),
+            icon: 'rw',
+            active: route().current('master.rw.*'),
+            roles: ['superadmin', 'admin', 'kepala_dusun'],
+        });
+    }
 
     if (['superadmin', 'admin'].includes(role.value)) {
         items.push(
@@ -115,13 +125,13 @@ const navItems = computed(() => {
         });
     }
 
-    if (['superadmin', 'admin'].includes(role.value)) {
+    if (['superadmin', 'admin', 'kepala_dusun'].includes(role.value)) {
         items.push({
             label: 'Export Data',
             href: route('export.index'),
             icon: 'export',
             active: route().current('export.*'),
-            roles: ['superadmin', 'admin'],
+            roles: ['superadmin', 'admin', 'kepala_dusun'],
         });
     }
 
@@ -133,6 +143,7 @@ const roleBadgeClass = computed(() => {
         superadmin: 'bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800',
         admin: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800',
         kepala_dusun: 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800',
+        ketua_rw: 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800',
     };
     return map[role.value] || 'bg-surface-100 text-surface-700 border border-surface-200 dark:bg-surface-800 dark:text-surface-300 dark:border-surface-700';
 });
@@ -142,6 +153,7 @@ const roleLabel = computed(() => {
         superadmin: 'Superadmin',
         admin: 'Admin Desa',
         kepala_dusun: 'Kepala Dusun',
+        ketua_rw: 'Ketua RW',
     };
     return map[role.value] || role.value;
 });
@@ -173,7 +185,7 @@ const roleLabel = computed(() => {
             ]"
         >
             <!-- Logo Header -->
-            <div class="h-16 flex items-center gap-3 px-5 border-b border-surface-200/80 dark:border-surface-700/80 shrink-0 bg-gradient-to-r from-primary-950 via-primary-900 to-primary-850">
+            <div class="h-16 flex items-center gap-3 px-5 border-b border-surface-200/80 dark:border-surface-700/80 shrink-0 bg-primary-900">
                 <div class="w-9 h-9 bg-white/10 backdrop-blur-md border border-white/20 rounded-xl flex items-center justify-center shadow-md">
                     <svg class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 v5m-4 0h4" />

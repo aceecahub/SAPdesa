@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\RwController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DusunController;
 use App\Http\Controllers\KategoriController;
@@ -29,7 +30,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('laporan', LaporanController::class);
     Route::patch('/laporan/{laporan}/status', [LaporanController::class, 'updateStatus'])->name('laporan.updateStatus');
 
-    // Master Data (admin + superadmin)
+    // Master Data RW (admin, superadmin, kepala_dusun - kepala_dusun view & edit only in controller)
+    Route::middleware('role:superadmin,admin,kepala_dusun')->prefix('master')->name('master.')->group(function () {
+        Route::post('rw/{rw}', [RwController::class, 'update']);
+        Route::resource('rw', RwController::class)->names('rw');
+    });
+
+    // Master Data Lanjutan (admin + superadmin)
     Route::middleware('role:superadmin,admin')->prefix('master')->name('master.')->group(function () {
         Route::post('dusun/{dusun}', [DusunController::class, 'update']);
         Route::resource('dusun', DusunController::class)->names('dusun');
@@ -42,10 +49,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('user', UserController::class)->except(['show']);
     });
 
-    // Export (admin + superadmin)
-    Route::middleware('role:superadmin,admin')->prefix('export')->name('export.')->group(function () {
+    // Export (admin, superadmin, kepala_dusun)
+    Route::middleware('role:superadmin,admin,kepala_dusun')->prefix('export')->name('export.')->group(function () {
         Route::get('/', [ExportController::class, 'index'])->name('index');
         Route::get('/csv', [ExportController::class, 'csv'])->name('csv');
+        Route::get('/excel', [ExportController::class, 'excel'])->name('excel');
     });
 });
 

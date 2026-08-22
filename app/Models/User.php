@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'dusun_id'])]
+#[Fillable(['name', 'email', 'password', 'role', 'dusun_id', 'rw_id'])]
 #[Hidden(['password', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -28,6 +28,11 @@ class User extends Authenticatable
     public function dusun()
     {
         return $this->belongsTo(Dusun::class);
+    }
+
+    public function rw()
+    {
+        return $this->belongsTo(RW::class);
     }
 
     public function laporan()
@@ -53,5 +58,10 @@ class User extends Authenticatable
     public function isKepalaDusun(): bool
     {
         return $this->role === 'kepala_dusun';
+    }
+
+    public function isKetuaRw(): bool
+    {
+        return $this->role === 'ketua_rw';
     }
 }

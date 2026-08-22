@@ -31,6 +31,7 @@ const roleBadgeClass = (role) => {
         superadmin: 'bg-rose-50 text-rose-700 border-rose-200/80 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/80',
         admin: 'bg-emerald-50 text-emerald-700 border-emerald-200/80 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/80',
         kepala_dusun: 'bg-amber-50 text-amber-700 border-amber-200/80 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/80',
+        ketua_rw: 'bg-blue-50 text-blue-700 border-blue-200/80 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/80',
     };
     return map[role] || 'bg-surface-100 text-surface-700 border-surface-200 dark:bg-surface-800 dark:text-surface-300';
 };
@@ -40,6 +41,7 @@ const roleLabel = (role) => {
         superadmin: 'Superadmin',
         admin: 'Admin Desa',
         kepala_dusun: 'Kepala Dusun',
+        ketua_rw: 'Ketua RW',
     };
     return map[role] || role;
 };

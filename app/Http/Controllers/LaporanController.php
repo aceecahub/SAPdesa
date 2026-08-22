@@ -6,6 +6,7 @@ use App\Models\Laporan;
 use App\Models\Kategori;
 use App\Models\Subkategori;
 use App\Models\Dusun;
+use App\Models\RW;
 use App\Models\TindakLanjut;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,16 +18,25 @@ class LaporanController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $query = Laporan::with(['kategori', 'subkategori', 'dusun', 'user']);
+        $query = Laporan::with(['kategori', 'subkategori', 'rw.dusun', 'user']);
 
-        // Scope: kepala_dusun hanya dusunnya
-        if ($user->isKepalaDusun()) {
-            $query->where('dusun_id', $user->dusun_id);
+        // Scope berdasarkan role
+        if ($user->isKetuaRw()) {
+            $query->where('rw_id', $user->rw_id);
+        } elseif ($user->isKepalaDusun()) {
+            $query->whereHas('rw', function ($q) use ($user) {
+                $q->where('dusun_id', $user->dusun_id);
+            });
         }
 
-        // Filter
+        // Filter RW & Dusun
+        if ($request->filled('rw_id')) {
+            $query->where('rw_id', $request->rw_id);
+        }
         if ($request->filled('dusun_id')) {
-            $query->where('dusun_id', $request->dusun_id);
+            $query->whereHas('rw', function ($q) use ($request) {
+                $q->where('dusun_id', $request->dusun_id);
+            });
         }
         if ($request->filled('kategori_id')) {
             $query->where('kategori_id', $request->kategori_id);
@@ -41,12 +51,14 @@ class LaporanController extends Controller
         $laporan = $query->latest('tanggal')->paginate(15)->withQueryString();
         $kategoriList = Kategori::all();
         $dusunList = Dusun::all();
+        $rwList = RW::with('dusun')->orderBy('dusun_id')->orderBy('nomor')->get();
 
         return Inertia::render('Laporan/Index', [
             'laporan' => $laporan,
             'kategoriList' => $kategoriList,
             'dusunList' => $dusunList,
-            'filters' => $request->only(['dusun_id', 'kategori_id', 'status', 'search']),
+            'rwList' => $rwList,
+            'filters' => $request->only(['rw_id', 'dusun_id', 'kategori_id', 'status', 'search']),
         ]);
     }
 
@@ -54,15 +66,23 @@ class LaporanController extends Controller
     {
         $user = Auth::user();
 
-        // Hanya kepala_dusun yang bisa buat laporan
-        if (!$user->isKepalaDusun() && !$user->isAdmin() && !$user->isSuperadmin()) {
+        // Siapa saja yang boleh buat laporan: ketua_rw, kepala_dusun, admin, superadmin
+        if (!$user->isKetuaRw() && !$user->isKepalaDusun() && !$user->isAdmin() && !$user->isSuperadmin()) {
             abort(403);
+        }
+
+        $rwListQuery = RW::with('dusun');
+        if ($user->isKepalaDusun()) {
+            $rwListQuery->where('dusun_id', $user->dusun_id);
+        } elseif ($user->isKetuaRw()) {
+            $rwListQuery->where('id', $user->rw_id);
         }
 
         return Inertia::render('Laporan/Create', [
             'kategoriList' => Kategori::all(),
             'subkategoriList' => Subkategori::all(),
-            'dusunList' => $user->isKepalaDusun() ? collect([$user->dusun]) : Dusun::all(),
+            'rwList' => $rwListQuery->get(),
+            'dusunList' => Dusun::all(),
         ]);
     }
 
@@ -83,12 +103,18 @@ class LaporanController extends Controller
         $data['tanggal'] = now()->toDateString();
         $data['status'] = 'baru';
 
-        // Dusun: kepala_dusun auto-set, admin/superadmin pilih
-        if ($user->isKepalaDusun()) {
-            $data['dusun_id'] = $user->dusun_id;
+        // Set RW ID
+        if ($user->isKetuaRw()) {
+            $data['rw_id'] = $user->rw_id;
         } else {
-            $request->validate(['dusun_id' => 'required|exists:dusun,id']);
-            $data['dusun_id'] = $request->dusun_id;
+            $request->validate(['rw_id' => 'required|exists:rw,id']);
+            if ($user->isKepalaDusun()) {
+                $rwObj = RW::find($request->rw_id);
+                if (!$rwObj || $rwObj->dusun_id !== $user->dusun_id) {
+                    return back()->withErrors(['rw_id' => 'RW yang dipilih harus berada di wilayah Dusun Anda.']);
+                }
+            }
+            $data['rw_id'] = $request->rw_id;
         }
 
         // Lampiran
@@ -112,13 +138,16 @@ class LaporanController extends Controller
     public function show(Laporan $laporan)
     {
         $user = Auth::user();
+        $laporan->load(['kategori', 'subkategori', 'rw.dusun', 'user', 'tindakLanjut.user']);
 
         // Scope check
-        if ($user->isKepalaDusun() && $laporan->dusun_id !== $user->dusun_id) {
+        if ($user->isKetuaRw() && $laporan->rw_id !== $user->rw_id) {
             abort(403, 'Anda tidak berhak mengakses laporan ini.');
         }
 
-        $laporan->load(['kategori', 'subkategori', 'dusun', 'user', 'tindakLanjut.user']);
+        if ($user->isKepalaDusun() && $laporan->rw?->dusun_id !== $user->dusun_id) {
+            abort(403, 'Anda tidak berhak mengakses laporan ini.');
+        }
 
         return Inertia::render('Laporan/Show', [
             'laporan' => $laporan,
@@ -189,9 +218,12 @@ class LaporanController extends Controller
     {
         $user = Auth::user();
 
-        // Kepala dusun hanya bisa hapus jika status baru dan dusun miliknya
-        if ($user->isKepalaDusun()) {
-            if ($laporan->dusun_id !== $user->dusun_id || $laporan->status !== 'baru') {
+        if ($user->isKetuaRw()) {
+            if ($laporan->rw_id !== $user->rw_id || $laporan->status !== 'baru') {
+                abort(403, 'Anda tidak berhak menghapus laporan ini.');
+            }
+        } elseif ($user->isKepalaDusun()) {
+            if ($laporan->rw?->dusun_id !== $user->dusun_id || $laporan->status !== 'baru') {
                 abort(403, 'Anda tidak berhak menghapus laporan ini.');
             }
         }
@@ -207,7 +239,7 @@ class LaporanController extends Controller
         $user = Auth::user();
 
         // Hanya admin/superadmin yang bisa ubah status
-        if ($user->isKepalaDusun()) {
+        if ($user->isKetuaRw() || $user->isKepalaDusun()) {
             abort(403, 'Anda tidak berhak mengubah status laporan.');
         }
 

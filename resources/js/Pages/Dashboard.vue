@@ -37,12 +37,15 @@ const props = defineProps({
     perKategori: Object,
     perSubkategori: Object,
     perDusun: Object,
+    perRw: Object,
+    dusunBreakdown: Array,
     perBulan: Object,
     laporanTerbaru: Array,
 });
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const isKetuaRw = computed(() => user.value?.role === 'ketua_rw');
 const isKepalaDusun = computed(() => user.value?.role === 'kepala_dusun');
 const isSuperadmin = computed(() => user.value?.role === 'superadmin');
 
@@ -166,30 +169,15 @@ const perKategoriData = computed(() => ({
     ],
 }));
 
-const perDusunData = computed(() => {
-    const keys = Object.keys(props.perDusun || {});
+const perRwData = computed(() => {
+    const keys = Object.keys(props.perRw || {});
     return {
         labels: keys,
         datasets: [
             {
                 label: 'Jumlah Laporan',
-                data: Object.values(props.perDusun || {}),
-                backgroundColor: keys.map((_, i) => dusunColors[i % dusunColors.length]),
-                borderRadius: 8,
-            },
-        ],
-    };
-});
-
-const perSubkategoriData = computed(() => {
-    const keys = Object.keys(props.perSubkategori || {});
-    return {
-        labels: keys,
-        datasets: [
-            {
-                label: 'Laporan',
-                data: Object.values(props.perSubkategori || {}),
-                backgroundColor: keys.map((_, i) => dusunColors[(i + 2) % dusunColors.length]),
+                data: Object.values(props.perRw || {}),
+                backgroundColor: keys.map((_, i) => dusunColors[(i + 1) % dusunColors.length]),
                 borderRadius: 8,
             },
         ],
@@ -228,6 +216,10 @@ const formatDate = (d) => {
     if (!d) return '-';
     return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
 };
+
+const formatRwNumber = (num) => {
+    return 'RW ' + String(num).padStart(2, '0');
+};
 </script>
 
 <template>
@@ -249,7 +241,6 @@ const formatDate = (d) => {
 
         <!-- Hero Welcome Banner -->
         <div class="relative bg-gradient-to-br from-primary-900 via-primary-950 to-emerald-950 text-white rounded-3xl p-6 sm:p-8 overflow-hidden shadow-xl border border-primary-800/40 mb-6 mx-4 sm:mx-0">
-            <!-- Background Decorative Glows -->
             <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
             <div class="absolute right-1/3 -top-12 w-48 h-48 bg-primary-400/10 rounded-full blur-2xl pointer-events-none"></div>
 
@@ -262,7 +253,10 @@ const formatDate = (d) => {
                             </svg>
                             {{ todayFormatted }}
                         </span>
-                        <span v-if="isKepalaDusun && user?.dusun" class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-amber-500/20 backdrop-blur-md text-amber-200 rounded-full border border-amber-400/30">
+                        <span v-if="isKetuaRw && user?.rw" class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-blue-500/20 backdrop-blur-md text-blue-200 rounded-full border border-blue-400/30">
+                            🏘️ {{ formatRwNumber(user.rw.nomor) }} (Dusun {{ user.rw?.dusun?.nama }})
+                        </span>
+                        <span v-else-if="isKepalaDusun && user?.dusun" class="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold bg-amber-500/20 backdrop-blur-md text-amber-200 rounded-full border border-amber-400/30">
                             📍 Dusun {{ user.dusun.nama }}
                         </span>
                     </div>
@@ -272,15 +266,17 @@ const formatDate = (d) => {
                     </h2>
                     
                     <p class="text-sm text-surface-200 leading-relaxed font-normal">
-                        <template v-if="isKepalaDusun">
-                            Berikut adalah rangkuman laporan aduan & aspirasi masyarakat di wilayah <span class="font-semibold text-white">Dusun {{ user?.dusun?.nama || '' }}</span>.
+                        <template v-if="isKetuaRw">
+                            Berikut adalah rangkuman laporan aduan & aspirasi masyarakat di wilayah <span class="font-semibold text-white">{{ formatRwNumber(user?.rw?.nomor) }} Dusun {{ user?.rw?.dusun?.nama || '' }}</span>.
+                        </template>
+                        <template v-else-if="isKepalaDusun">
+                            Berikut adalah rangkuman laporan aduan & aspirasi masyarakat dari RW-RW di bawah wilayah kewenangan <span class="font-semibold text-white">Dusun {{ user?.dusun?.nama || '' }}</span>.
                         </template>
                         <template v-else>
-                            Pantau secara real-time pengaduan dan perkembangan layanan kemasyarakatan di seluruh dusun Desa Sirnaputra.
+                            Pantau secara real-time pengaduan dan perkembangan layanan kemasyarakatan per RW dan Dusun di Desa Sirnaputra.
                         </template>
                     </p>
 
-                    <!-- Alert Badge if there are unhandled 'baru' reports -->
                     <div v-if="stats.baru > 0" class="pt-2 flex items-center gap-2">
                         <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-amber-500/20 border border-amber-400/40 text-amber-200 text-xs font-bold backdrop-blur-sm animate-pulse">
                             <span class="w-2 h-2 rounded-full bg-amber-400"></span>
@@ -289,7 +285,6 @@ const formatDate = (d) => {
                     </div>
                 </div>
 
-                <!-- Quick Action Buttons -->
                 <div class="flex flex-wrap items-center gap-3 shrink-0">
                     <Link
                         :href="route('laporan.index')"
@@ -302,7 +297,7 @@ const formatDate = (d) => {
                     </Link>
                     
                     <Link
-                        v-if="!isKepalaDusun"
+                        v-if="!isKetuaRw && !isKepalaDusun"
                         :href="route('export.index')"
                         class="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs font-bold text-white bg-white/10 hover:bg-white/20 border border-white/25 rounded-xl backdrop-blur-md transition-all duration-200 active:scale-95"
                     >
@@ -369,7 +364,6 @@ const formatDate = (d) => {
                 <span class="text-xs font-semibold text-surface-500">Total: {{ stats.total }} Aduan</span>
             </div>
 
-            <!-- Progress Bar -->
             <div class="w-full h-3.5 bg-surface-100 dark:bg-surface-700 rounded-full overflow-hidden flex gap-0.5 p-0.5">
                 <div
                     v-for="item in statusBreakdown"
@@ -380,7 +374,6 @@ const formatDate = (d) => {
                 ></div>
             </div>
 
-            <!-- Legend Pills -->
             <div class="flex flex-wrap items-center justify-between gap-3 mt-4 text-xs font-medium">
                 <div v-for="item in statusBreakdown" :key="item.key" class="flex items-center gap-2">
                     <span :class="['w-2.5 h-2.5 rounded-full', item.color]"></span>
@@ -390,9 +383,122 @@ const formatDate = (d) => {
             </div>
         </div>
 
+        <!-- Section Analisis Per Dusun & RW (Rincian per Dusun) -->
+        <div v-if="dusunBreakdown && dusunBreakdown.length > 0 && !isKetuaRw" class="mb-6 px-4 sm:px-0">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-base sm:text-lg font-black text-surface-900 dark:text-surface-50 tracking-tight flex items-center gap-2">
+                        <span>📍</span>
+                        <span>Rincian Laporan Per Dusun & Wilayah RW</span>
+                    </h3>
+                    <p class="text-xs text-surface-500 dark:text-surface-400 font-medium">
+                        Pantau RW mana saja di tiap dusun yang aktif mengirimkan laporan aspirasi
+                    </p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div
+                    v-for="dusun in dusunBreakdown"
+                    :key="dusun.id"
+                    class="card p-5 rounded-2xl flex flex-col justify-between hover:shadow-md transition-shadow"
+                >
+                    <!-- Dusun Header Info -->
+                    <div class="flex items-center justify-between pb-3.5 border-b border-surface-200/80 dark:border-surface-700/80 mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-full overflow-hidden bg-primary-100 dark:bg-primary-950 border-2 border-primary-500/40 shrink-0 flex items-center justify-center font-bold text-sm text-primary-700 shadow-xs">
+                                <img v-if="dusun.foto_kepala" :src="'/storage/' + dusun.foto_kepala" :alt="dusun.nama_kepala" class="w-full h-full object-cover" />
+                                <span v-else>👤</span>
+                            </div>
+                            <div>
+                                <h4 class="font-extrabold text-sm text-surface-900 dark:text-surface-100">
+                                    Dusun {{ dusun.nama }}
+                                </h4>
+                                <p class="text-[11px] text-surface-500 dark:text-surface-400 font-medium">
+                                    Kepala Dusun: <strong class="text-surface-700 dark:text-surface-200">{{ dusun.nama_kepala || 'Belum diatur' }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl bg-primary-50 dark:bg-primary-950/60 border border-primary-200 dark:border-primary-800 text-primary-800 dark:text-primary-300 font-black text-xs">
+                            {{ dusun.total_laporan }} Laporan
+                        </span>
+                    </div>
+
+                    <!-- Breakdown per RW dalam Dusun ini -->
+                    <div class="space-y-3.5 flex-1">
+                        <div v-if="!dusun.rws || dusun.rws.length === 0" class="text-center py-6 text-xs text-surface-400 font-medium">
+                            Belum ada data RW terdaftar pada dusun ini.
+                        </div>
+
+                        <div
+                            v-for="rw in dusun.rws"
+                            :key="rw.id"
+                            class="bg-surface-50 dark:bg-surface-800/60 rounded-xl p-3 border border-surface-200/60 dark:border-surface-700/60 space-y-2"
+                        >
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <!-- Foto Ketua RW Avatar -->
+                                    <div class="w-8 h-8 rounded-full overflow-hidden bg-primary-100 dark:bg-primary-950 border border-primary-300 dark:border-primary-800 shrink-0 flex items-center justify-center text-xs font-bold text-primary-700 shadow-2xs">
+                                        <img v-if="rw.foto_ketua" :src="'/storage/' + rw.foto_ketua" :alt="rw.nama_ketua" class="w-full h-full object-cover" />
+                                        <span v-else>👤</span>
+                                    </div>
+                                    <div>
+                                        <span class="font-black text-xs text-surface-900 dark:text-surface-100 block">
+                                            {{ rw.label }}
+                                        </span>
+                                        <span class="text-[11px] text-surface-500 font-medium block">
+                                            Ketua: {{ rw.nama_ketua || '-' }}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                <!-- Badge total laporan RW -->
+                                <div class="text-right">
+                                    <span
+                                        :class="[
+                                            'px-2.5 py-1 text-xs font-extrabold rounded-lg inline-block',
+                                            rw.total > 0
+                                                ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                                : 'bg-surface-200/60 dark:bg-surface-700/60 text-surface-400'
+                                        ]"
+                                    >
+                                        {{ rw.total }} Laporan
+                                    </span>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar & Status Pill Badges -->
+                            <div v-if="rw.total > 0" class="pt-1 space-y-1.5">
+                                <div class="w-full h-2 bg-surface-200/70 dark:bg-surface-700 rounded-full overflow-hidden flex">
+                                    <div v-if="rw.baru > 0" class="bg-amber-500 h-full" :style="{ width: `${(rw.baru / rw.total) * 100}%` }" title="Baru"></div>
+                                    <div v-if="rw.diproses > 0" class="bg-blue-500 h-full" :style="{ width: `${(rw.diproses / rw.total) * 100}%` }" title="Diproses"></div>
+                                    <div v-if="rw.selesai > 0" class="bg-emerald-500 h-full" :style="{ width: `${(rw.selesai / rw.total) * 100}%` }" title="Selesai"></div>
+                                    <div v-if="rw.ditolak > 0" class="bg-rose-500 h-full" :style="{ width: `${(rw.ditolak / rw.total) * 100}%` }" title="Ditolak"></div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+                                    <span v-if="rw.baru > 0" class="text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-900">
+                                        {{ rw.baru }} Baru
+                                    </span>
+                                    <span v-if="rw.diproses > 0" class="text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 px-1.5 py-0.5 rounded border border-blue-200 dark:border-blue-900">
+                                        {{ rw.diproses }} Diproses
+                                    </span>
+                                    <span v-if="rw.selesai > 0" class="text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-1.5 py-0.5 rounded border border-emerald-200 dark:border-emerald-900">
+                                        {{ rw.selesai }} Selesai
+                                    </span>
+                                    <span v-if="rw.ditolak > 0" class="text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 px-1.5 py-0.5 rounded border border-rose-200 dark:border-rose-900">
+                                        {{ rw.ditolak }} Ditolak
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Charts Row 1: Line Chart & Doughnut Chart -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 px-4 sm:px-0">
-            <!-- Trend Monthly Line Chart -->
             <div class="card p-5 lg:col-span-2 rounded-2xl flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-4">
                     <div>
@@ -415,7 +521,6 @@ const formatDate = (d) => {
                 </div>
             </div>
 
-            <!-- Category Doughnut Chart -->
             <div class="card p-5 rounded-2xl flex flex-col justify-between">
                 <div class="flex items-center justify-between mb-4">
                     <div>
@@ -436,8 +541,28 @@ const formatDate = (d) => {
             </div>
         </div>
 
-        <!-- Row 2: Top Categories Ranking & Subcategory Bar Chart -->
+        <!-- Row 2: Sebaran Per RW / Dusun & Top Categories Ranking -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6 px-4 sm:px-0">
+            <!-- Sebaran Laporan per RW -->
+            <div class="card p-5 rounded-2xl">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-surface-800 dark:text-surface-100 tracking-tight">
+                            Sebaran Laporan per RW
+                        </h3>
+                        <p class="text-xs text-surface-500 dark:text-surface-400 font-medium">
+                            Jumlah aduan berdasarkan Rukun Warga
+                        </p>
+                    </div>
+                </div>
+                <div class="h-56">
+                    <Bar v-if="Object.keys(perRw || {}).length" :data="perRwData" :options="chartOptions" />
+                    <div v-else class="flex items-center justify-center h-full text-surface-400 dark:text-surface-500 text-sm font-medium">
+                        Belum ada data laporan per RW
+                    </div>
+                </div>
+            </div>
+
             <!-- Top Kategori Progress Widget -->
             <div class="card p-5 rounded-2xl">
                 <div class="flex items-center justify-between mb-4">
@@ -476,31 +601,6 @@ const formatDate = (d) => {
                     Belum ada data kategori
                 </div>
             </div>
-
-            <!-- Per Subkategori or Per Dusun Chart -->
-            <div class="card p-5 rounded-2xl">
-                <div class="flex items-center justify-between mb-4">
-                    <div>
-                        <h3 v-if="!isKepalaDusun && Object.keys(perDusun || {}).length" class="text-sm font-bold text-surface-800 dark:text-surface-100 tracking-tight">
-                            Sebaran Laporan per Dusun
-                        </h3>
-                        <h3 v-else class="text-sm font-bold text-surface-800 dark:text-surface-100 tracking-tight">
-                            Laporan per Subkategori
-                        </h3>
-                        <p class="text-xs text-surface-500 dark:text-surface-400 font-medium">
-                            Rincian detail sub-bidang aduan
-                        </p>
-                    </div>
-                </div>
-
-                <div class="h-56">
-                    <Bar v-if="!isKepalaDusun && Object.keys(perDusun || {}).length" :data="perDusunData" :options="chartOptions" />
-                    <Bar v-else-if="Object.keys(perSubkategori || {}).length" :data="perSubkategoriData" :options="chartOptions" />
-                    <div v-else class="flex items-center justify-center h-full text-surface-400 dark:text-surface-500 text-sm font-medium">
-                        Belum ada data rincian subkategori
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Laporan Terbaru Section -->
@@ -529,7 +629,7 @@ const formatDate = (d) => {
                     <thead>
                         <tr>
                             <th>Judul Laporan</th>
-                            <th>Wilayah Dusun</th>
+                            <th>Wilayah (RW / Dusun)</th>
                             <th>Kategori</th>
                             <th>Tanggal Masuk</th>
                             <th>Status Penanganan</th>
@@ -547,9 +647,14 @@ const formatDate = (d) => {
                                 </Link>
                             </td>
                             <td>
-                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-surface-700 dark:text-surface-300 bg-surface-100 dark:bg-surface-700/60 px-2.5 py-1 rounded-lg">
-                                    📍 {{ item.dusun?.nama || '-' }}
-                                </span>
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="inline-flex items-center gap-1 text-xs font-bold text-surface-800 dark:text-surface-200">
+                                        🏘️ {{ item.rw ? formatRwNumber(item.rw.nomor) : '-' }}
+                                    </span>
+                                    <span class="text-[11px] font-semibold text-surface-500 dark:text-surface-400">
+                                        📍 Dusun {{ item.rw?.dusun?.nama || '-' }}
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <span class="inline-flex items-center gap-1 text-xs font-semibold text-primary-800 dark:text-primary-300 bg-primary-50 dark:bg-primary-950/60 border border-primary-100 dark:border-primary-900/60 px-2.5 py-1 rounded-lg">
@@ -606,8 +711,8 @@ const formatDate = (d) => {
                         <StatusBadge :status="item.status" />
                     </div>
                     <div class="flex flex-wrap items-center gap-3 text-xs font-medium text-surface-500 dark:text-surface-400">
-                        <span v-if="item.dusun" class="flex items-center gap-1">
-                            📍 {{ item.dusun.nama }}
+                        <span v-if="item.rw" class="flex items-center gap-1">
+                            🏘️ {{ formatRwNumber(item.rw.nomor) }} (Dusun {{ item.rw?.dusun?.nama }})
                         </span>
                         <span v-if="item.kategori" class="flex items-center gap-1">
                             🏷️ {{ item.kategori.nama }}
@@ -621,4 +726,3 @@ const formatDate = (d) => {
         </div>
     </AuthenticatedLayout>
 </template>
-

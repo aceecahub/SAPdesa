@@ -2,16 +2,18 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import FileUpload from '@/Components/FileUpload.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 
 const props = defineProps({
     kategoriList: Array,
     subkategoriList: Array,
+    rwList: Array,
     dusunList: Array,
 });
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const isKetuaRw = computed(() => user.value?.role === 'ketua_rw');
 const isKepalaDusun = computed(() => user.value?.role === 'kepala_dusun');
 
 const form = useForm({
@@ -19,9 +21,16 @@ const form = useForm({
     isi: '',
     kategori_id: '',
     subkategori_id: '',
-    dusun_id: isKepalaDusun.value ? user.value?.dusun_id : '',
+    rw_id: isKetuaRw.value ? user.value?.rw_id : '',
     lampiran: null,
 });
+
+const formatRwLabel = (rw) => {
+    if (!rw) return '';
+    const rwNum = 'RW ' + String(rw.nomor).padStart(2, '0');
+    const dusunNama = rw.dusun?.nama ? ` – Dusun ${rw.dusun.nama}` : '';
+    return `${rwNum}${dusunNama}`;
+};
 
 const submit = () => {
     form.post(route('laporan.store'), {
@@ -104,26 +113,30 @@ const submit = () => {
                         </div>
                     </div>
 
-                    <!-- Wilayah Dusun -->
-                    <div v-if="!isKepalaDusun">
+                    <!-- Selector Wilayah RW -->
+                    <div v-if="!isKetuaRw">
                         <label class="label-text">
-                            Wilayah Dusun <span class="text-rose-500">*</span>
+                            Wilayah RW <span class="text-rose-500">*</span>
                         </label>
-                        <select v-model="form.dusun_id" class="input-field">
-                            <option value="">-- Pilih Wilayah Dusun --</option>
-                            <option v-for="d in dusunList" :key="d.id" :value="d.id">{{ d.nama }}</option>
+                        <select v-model="form.rw_id" class="input-field">
+                            <option value="">-- Pilih Wilayah RW --</option>
+                            <option v-for="rw in rwList" :key="rw.id" :value="rw.id">
+                                {{ formatRwLabel(rw) }}
+                            </option>
                         </select>
-                        <p v-if="form.errors.dusun_id" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">
-                            {{ form.errors.dusun_id }}
+                        <p v-if="form.errors.rw_id" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">
+                            {{ form.errors.rw_id }}
                         </p>
                     </div>
 
-                    <div v-if="isKepalaDusun" class="bg-surface-50 dark:bg-surface-700/50 border border-surface-200 dark:border-surface-700 rounded-2xl p-4 flex items-center gap-3">
+                    <div v-if="isKetuaRw" class="bg-surface-50 dark:bg-surface-700/50 border border-surface-200 dark:border-surface-700 rounded-2xl p-4 flex items-center gap-3">
                         <span class="text-xl">📍</span>
                         <div class="text-xs">
                             <span class="text-surface-500 dark:text-surface-400 font-medium">Wilayah Laporan: </span>
-                            <span class="font-bold text-surface-900 dark:text-surface-100">Dusun {{ user?.dusun?.nama || dusunList[0]?.nama }}</span>
-                            <p class="text-[11px] text-surface-400 dark:text-surface-500 mt-0.5">Otomatis disesuaikan dengan wilayah kewenangan Anda.</p>
+                            <span class="font-bold text-surface-900 dark:text-surface-100">
+                                {{ formatRwLabel(user?.rw) || 'RW Anda' }}
+                            </span>
+                            <p class="text-[11px] text-surface-400 dark:text-surface-500 mt-0.5">Otomatis disesuaikan dengan wilayah kewenangan RW Anda.</p>
                         </div>
                     </div>
 
@@ -164,4 +177,3 @@ const submit = () => {
         </div>
     </AuthenticatedLayout>
 </template>
-

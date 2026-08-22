@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Laporan;
 use App\Models\Dusun;
+use App\Models\RW;
 use App\Models\Kategori;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -18,9 +19,13 @@ class DashboardController extends Controller
         $user = Auth::user();
         $query = Laporan::query();
 
-        // Scope: kepala_dusun hanya dusunnya
-        if ($user->isKepalaDusun()) {
-            $query->where('dusun_id', $user->dusun_id);
+        // Scope berdasarkan role
+        if ($user->isKetuaRw()) {
+            $query->where('rw_id', $user->rw_id);
+        } elseif ($user->isKepalaDusun()) {
+            $query->whereHas('rw', function ($q) use ($user) {
+                $q->where('dusun_id', $user->dusun_id);
+            });
         }
 
         // Stat cards
@@ -41,13 +46,69 @@ class DashboardController extends Controller
 
         // Per dusun (only for admin/superadmin)
         $perDusun = [];
-        if (!$user->isKepalaDusun()) {
-            $perDusun = Laporan::join('dusun', 'laporan.dusun_id', '=', 'dusun.id')
+        if (!$user->isKetuaRw() && !$user->isKepalaDusun()) {
+            $perDusun = Laporan::join('rw', 'laporan.rw_id', '=', 'rw.id')
+                ->join('dusun', 'rw.dusun_id', '=', 'dusun.id')
                 ->select('dusun.nama', DB::raw('count(*) as total'))
                 ->groupBy('dusun.nama')
                 ->pluck('total', 'nama')
                 ->toArray();
         }
+
+        // Per RW
+        $perRw = (clone $query)
+            ->join('rw', 'laporan.rw_id', '=', 'rw.id')
+            ->join('dusun', 'rw.dusun_id', '=', 'dusun.id')
+            ->select(
+                DB::raw("CONCAT('RW ', LPAD(rw.nomor, 2, '0'), ' (', dusun.nama, ')') as nama_rw"),
+                DB::raw('count(*) as total')
+            )
+            ->groupBy('rw.id', 'rw.nomor', 'dusun.nama')
+            ->pluck('total', 'nama_rw')
+            ->toArray();
+
+        // Rincian Dusun & RW internalnya
+        $dusunListQuery = Dusun::with(['rw' => function ($q) {
+            $q->orderBy('nomor');
+        }]);
+
+        if ($user->isKepalaDusun()) {
+            $dusunListQuery->where('id', $user->dusun_id);
+        }
+
+        $dusunBreakdown = $dusunListQuery->get()->map(function ($dusun) {
+            $rws = $dusun->rw->map(function ($rw) {
+                $laporanQuery = Laporan::where('rw_id', $rw->id);
+                $total = $laporanQuery->count();
+                $baru = (clone $laporanQuery)->where('status', 'baru')->count();
+                $diproses = (clone $laporanQuery)->where('status', 'diproses')->count();
+                $selesai = (clone $laporanQuery)->where('status', 'selesai')->count();
+                $ditolak = (clone $laporanQuery)->where('status', 'ditolak')->count();
+
+                return [
+                    'id' => $rw->id,
+                    'nomor' => $rw->nomor,
+                    'label' => 'RW ' . str_pad($rw->nomor, 2, '0', STR_PAD_LEFT),
+                    'nama_ketua' => $rw->nama_ketua,
+                    'foto_ketua' => $rw->foto_ketua,
+                    'total' => $total,
+                    'baru' => $baru,
+                    'diproses' => $diproses,
+                    'selesai' => $selesai,
+                    'ditolak' => $ditolak,
+                ];
+            });
+
+            return [
+                'id' => $dusun->id,
+                'nama' => $dusun->nama,
+                'nama_kepala' => $dusun->nama_kepala,
+                'foto_kepala' => $dusun->foto_kepala,
+                'jumlah_penduduk' => $dusun->jumlah_penduduk,
+                'total_laporan' => $rws->sum('total'),
+                'rws' => $rws,
+            ];
+        });
 
         // Per bulan (6 bulan terakhir)
         $perBulan = (clone $query)
@@ -71,7 +132,7 @@ class DashboardController extends Controller
 
         // Laporan terbaru (5)
         $laporanTerbaru = (clone $query)
-            ->with(['kategori', 'subkategori', 'dusun', 'user'])
+            ->with(['kategori', 'subkategori', 'rw.dusun', 'user'])
             ->latest('tanggal')
             ->limit(5)
             ->get();
@@ -79,6 +140,7 @@ class DashboardController extends Controller
         // User stats (superadmin only)
         $totalUsers = $user->isSuperadmin() ? User::count() : null;
         $totalDusun = Dusun::count();
+        $totalRw = RW::count();
 
         // Additional KPI metrics
         $selesaiCount = $statusCounts['selesai'] ?? 0;
@@ -107,10 +169,13 @@ class DashboardController extends Controller
                 'trenBulanIni' => $trenBulanIni,
                 'totalUsers' => $totalUsers,
                 'totalDusun' => $totalDusun,
+                'totalRw' => $totalRw,
             ],
             'perKategori' => $perKategori,
             'perSubkategori' => $perSubkategori,
             'perDusun' => $perDusun,
+            'perRw' => $perRw,
+            'dusunBreakdown' => $dusunBreakdown,
             'perBulan' => $perBulan,
             'laporanTerbaru' => $laporanTerbaru,
         ]);

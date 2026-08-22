@@ -10,16 +10,19 @@ const props = defineProps({
     laporan: Object,
     kategoriList: Array,
     dusunList: Array,
+    rwList: Array,
     filters: Object,
 });
 
 const page = usePage();
 const user = computed(() => page.props.auth.user);
+const isKetuaRw = computed(() => user.value?.role === 'ketua_rw');
 const isKepalaDusun = computed(() => user.value?.role === 'kepala_dusun');
 
 // Filter state
 const search = ref(props.filters?.search || '');
 const dusunId = ref(props.filters?.dusun_id || '');
+const rwId = ref(props.filters?.rw_id || '');
 const kategoriId = ref(props.filters?.kategori_id || '');
 const status = ref(props.filters?.status || '');
 
@@ -29,6 +32,7 @@ const applyFilters = () => {
     router.get(route('laporan.index'), {
         search: search.value || undefined,
         dusun_id: dusunId.value || undefined,
+        rw_id: rwId.value || undefined,
         kategori_id: kategoriId.value || undefined,
         status: status.value || undefined,
     }, {
@@ -40,6 +44,7 @@ const applyFilters = () => {
 const resetFilters = () => {
     search.value = '';
     dusunId.value = '';
+    rwId.value = '';
     kategoriId.value = '';
     status.value = '';
     applyFilters();
@@ -50,7 +55,7 @@ watch(search, () => {
     searchTimeout = setTimeout(applyFilters, 400);
 });
 
-watch([dusunId, kategoriId, status], applyFilters);
+watch([dusunId, rwId, kategoriId, status], applyFilters);
 
 const deleteModal = ref(null);
 const deleteTarget = ref(null);
@@ -68,13 +73,18 @@ const handleDelete = () => {
 
 const canDelete = (item) => {
     if (user.value?.role === 'superadmin' || user.value?.role === 'admin') return true;
-    if (isKepalaDusun.value && item.status === 'baru' && item.dusun_id === user.value?.dusun_id) return true;
+    if (isKetuaRw.value && item.status === 'baru' && item.rw_id === user.value?.rw_id) return true;
+    if (isKepalaDusun.value && item.status === 'baru' && item.rw?.dusun_id === user.value?.dusun_id) return true;
     return false;
 };
 
 const formatDate = (d) => {
     if (!d) return '-';
     return new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' });
+};
+
+const formatRwNumber = (num) => {
+    return 'RW ' + String(num).padStart(2, '0');
 };
 </script>
 
@@ -119,13 +129,20 @@ const formatDate = (d) => {
                 </div>
 
                 <!-- Filters dropdown grid -->
-                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 lg:flex lg:items-center">
-                    <select v-if="!isKepalaDusun" v-model="dusunId" class="input-field text-xs sm:text-sm lg:w-44">
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 lg:flex lg:items-center">
+                    <select v-if="!isKetuaRw && !isKepalaDusun" v-model="dusunId" class="input-field text-xs sm:text-sm lg:w-40">
                         <option value="">Semua Dusun</option>
                         <option v-for="d in dusunList" :key="d.id" :value="d.id">{{ d.nama }}</option>
                     </select>
 
-                    <select v-model="kategoriId" class="input-field text-xs sm:text-sm lg:w-44">
+                    <select v-if="!isKetuaRw" v-model="rwId" class="input-field text-xs sm:text-sm lg:w-44">
+                        <option value="">Semua RW</option>
+                        <option v-for="rw in rwList" :key="rw.id" :value="rw.id">
+                            {{ formatRwNumber(rw.nomor) }} - {{ rw.dusun?.nama }}
+                        </option>
+                    </select>
+
+                    <select v-model="kategoriId" class="input-field text-xs sm:text-sm lg:w-40">
                         <option value="">Semua Kategori</option>
                         <option v-for="k in kategoriList" :key="k.id" :value="k.id">{{ k.nama }}</option>
                     </select>
@@ -138,7 +155,7 @@ const formatDate = (d) => {
                         <option value="ditolak">Ditolak</option>
                     </select>
 
-                    <button @click="resetFilters" class="btn-ghost text-xs font-semibold whitespace-nowrap col-span-2 sm:col-span-3 lg:col-span-1">
+                    <button @click="resetFilters" class="btn-ghost text-xs font-semibold whitespace-nowrap col-span-2 sm:col-span-4 lg:col-span-1">
                         Reset Filter
                     </button>
                 </div>
@@ -159,7 +176,7 @@ const formatDate = (d) => {
                     <thead>
                         <tr>
                             <th>Judul Laporan</th>
-                            <th>Dusun</th>
+                            <th>Wilayah (RW / Dusun)</th>
                             <th>Kategori</th>
                             <th>Pelapor</th>
                             <th>Tanggal</th>
@@ -178,9 +195,14 @@ const formatDate = (d) => {
                                 </Link>
                             </td>
                             <td>
-                                <span class="inline-flex items-center gap-1 text-xs font-semibold text-surface-700 dark:text-surface-300 bg-surface-100 dark:bg-surface-700/60 px-2.5 py-1 rounded-lg">
-                                    📍 {{ item.dusun?.nama || '-' }}
-                                </span>
+                                <div class="flex flex-col gap-0.5">
+                                    <span class="inline-flex items-center gap-1 text-xs font-bold text-surface-800 dark:text-surface-200">
+                                        🏘️ {{ item.rw ? formatRwNumber(item.rw.nomor) : '-' }}
+                                    </span>
+                                    <span class="text-[11px] font-semibold text-surface-500 dark:text-surface-400">
+                                        📍 Dusun {{ item.rw?.dusun?.nama || '-' }}
+                                    </span>
+                                </div>
                             </td>
                             <td>
                                 <div>
@@ -263,7 +285,7 @@ const formatDate = (d) => {
 
                     <!-- Meta info chips -->
                     <div class="flex flex-wrap items-center gap-2 text-xs font-medium text-surface-500 dark:text-surface-400">
-                        <span v-if="item.dusun">📍 {{ item.dusun.nama }}</span>
+                        <span v-if="item.rw">🏘️ {{ formatRwNumber(item.rw.nomor) }} (Dusun {{ item.rw?.dusun?.nama }})</span>
                         <span v-if="item.kategori">🏷️ {{ item.kategori.nama }}<template v-if="item.subkategori"> / {{ item.subkategori.nama }}</template></span>
                         <span>👤 {{ item.user?.name || '-' }}</span>
                         <span class="ml-auto">📅 {{ formatDate(item.tanggal) }}</span>
@@ -306,4 +328,3 @@ const formatDate = (d) => {
         />
     </AuthenticatedLayout>
 </template>
-

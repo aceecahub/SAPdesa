@@ -12,7 +12,7 @@ class Laporan extends Model
     protected $table = 'laporan';
 
     protected $fillable = [
-        'judul', 'isi', 'kategori_id', 'subkategori_id', 'dusun_id', 'user_id',
+        'judul', 'isi', 'kategori_id', 'subkategori_id', 'rw_id', 'user_id',
         'tanggal', 'lampiran', 'status', 'respon_admin'
     ];
 
@@ -25,9 +25,9 @@ class Laporan extends Model
         return $this->belongsTo(Kategori::class);
     }
 
-    public function dusun()
+    public function rw()
     {
-        return $this->belongsTo(Dusun::class);
+        return $this->belongsTo(RW::class);
     }
 
     public function subkategori()
@@ -45,8 +45,15 @@ class Laporan extends Model
         return $this->hasMany(TindakLanjut::class);
     }
 
+    public function scopeForRw($query, $rwId)
+    {
+        return $query->where('rw_id', $rwId);
+    }
+
     public function scopeForDusun($query, $dusunId)
     {
-        return $query->where('dusun_id', $dusunId);
+        return $query->whereHas('rw', function ($q) use ($dusunId) {
+            $q->where('dusun_id', $dusunId);
+        });
     }
 }
