@@ -10,8 +10,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-#[Fillable(['name', 'email', 'password', 'role', 'dusun_id', 'rw_id'])]
-#[Hidden(['password', 'remember_token'])]
+#[Fillable(['name', 'email', 'password', 'password_plain', 'role', 'dusun_id', 'rw_id'])]
+#[Hidden(['password', 'password_plain', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
@@ -63,5 +63,17 @@ class User extends Authenticatable
     public function isKetuaRw(): bool
     {
         return $this->role === 'ketua_rw';
+    }
+
+    public function getDecryptedPassword(): ?string
+    {
+        if (empty($this->password_plain)) {
+            return null;
+        }
+        try {
+            return \Illuminate\Support\Facades\Crypt::decryptString($this->password_plain);
+        } catch (\Throwable $e) {
+            return null;
+        }
     }
 }

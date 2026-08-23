@@ -11,9 +11,28 @@ const props = defineProps({
 
 const page = usePage();
 const currentUser = computed(() => page.props.auth.user);
+const isSuperadmin = computed(() => currentUser.value?.role === 'superadmin');
 
 const deleteModal = ref(null);
 const deleteTarget = ref(null);
+
+const visiblePasswords = ref({});
+const copiedId = ref(null);
+
+const togglePasswordVisibility = (userId) => {
+    visiblePasswords.value[userId] = !visiblePasswords.value[userId];
+};
+
+const copyPassword = (userId, password) => {
+    if (!password) return;
+    navigator.clipboard.writeText(password);
+    copiedId.value = userId;
+    setTimeout(() => {
+        if (copiedId.value === userId) {
+            copiedId.value = null;
+        }
+    }, 2000);
+};
 
 const confirmDelete = (item) => {
     deleteTarget.value = item;
@@ -58,7 +77,7 @@ const roleLabel = (role) => {
                         Kelola Pengguna Sistem
                     </h1>
                     <p class="text-xs text-surface-500 dark:text-surface-400 font-medium">
-                        Manajemen akun Superadmin, Admin Desa, dan Kepala Dusun
+                        Manajemen akun Superadmin, Admin Desa, Kepala Dusun, dan Ketua RW
                     </p>
                 </div>
                 <Link :href="route('user.create')" class="btn-primary text-xs sm:text-sm shrink-0">
@@ -82,6 +101,7 @@ const roleLabel = (role) => {
                         <tr>
                             <th>Nama Pengguna</th>
                             <th>Alamat Email</th>
+                            <th v-if="isSuperadmin">Kata Sandi</th>
                             <th>Peran (Role)</th>
                             <th>Wilayah Dusun</th>
                             <th class="text-right">Aksi</th>
@@ -104,6 +124,37 @@ const roleLabel = (role) => {
                             </td>
                             <td class="text-xs font-medium text-surface-600 dark:text-surface-400">
                                 {{ item.email }}
+                            </td>
+                            <td v-if="isSuperadmin">
+                                <div v-if="item.visible_password" class="flex items-center gap-1.5 font-mono text-xs">
+                                    <span class="bg-surface-100 dark:bg-surface-800 px-2 py-1 rounded-md text-surface-900 dark:text-surface-100 font-semibold border border-surface-200 dark:border-surface-700 max-w-[130px] truncate select-all">
+                                        {{ visiblePasswords[item.id] ? item.visible_password : '••••••••' }}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        @click="togglePasswordVisibility(item.id)"
+                                        class="p-1 text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors cursor-pointer"
+                                        :title="visiblePasswords[item.id] ? 'Sembunyikan Kata Sandi' : 'Tampilkan Kata Sandi'"
+                                    >
+                                        <svg v-if="visiblePasswords[item.id]" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                        </svg>
+                                        <svg v-else class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12c1.074-4.65 5.244-8 10.037-8 4.793 0 8.963 3.35 10.037 8-1.074 4.65-5.244 8-10.037 8-4.793 0-8.963-3.35-10.037-8z" />
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                    </button>
+                                    <button
+                                        v-if="visiblePasswords[item.id]"
+                                        type="button"
+                                        @click="copyPassword(item.id, item.visible_password)"
+                                        class="px-2 py-0.5 rounded text-[11px] font-extrabold bg-primary-50 text-primary-700 dark:bg-primary-950/60 dark:text-primary-300 border border-primary-200 dark:border-primary-800 transition-colors cursor-pointer shrink-0"
+                                        title="Salin Kata Sandi"
+                                    >
+                                        {{ copiedId === item.id ? '✓ Tersalin' : '📋 Salin' }}
+                                    </button>
+                                </div>
+                                <span v-else class="text-xs text-surface-400 font-medium">-</span>
                             </td>
                             <td>
                                 <span :class="['inline-flex items-center px-2.5 py-1 text-xs font-bold border rounded-full shadow-xs', roleBadgeClass(item.role)]">
@@ -140,7 +191,7 @@ const roleLabel = (role) => {
                 <div
                     v-for="item in users.data"
                     :key="item.id"
-                    class="px-4 py-3.5 space-y-2"
+                    class="px-4 py-3.5 space-y-2.5"
                 >
                     <div class="flex items-start justify-between gap-2">
                         <div class="flex items-center gap-2.5">
@@ -158,6 +209,36 @@ const roleLabel = (role) => {
                         <span :class="['inline-flex items-center px-2 py-0.5 text-[10px] font-bold border rounded-full shrink-0', roleBadgeClass(item.role)]">
                             {{ roleLabel(item.role) }}
                         </span>
+                    </div>
+
+                    <div v-if="isSuperadmin && item.visible_password" class="flex items-center justify-between text-xs pt-1 border-t border-surface-100 dark:border-surface-800">
+                        <span class="text-surface-500 font-medium text-[11px]">🔑 Kata Sandi:</span>
+                        <div class="flex items-center gap-1.5 font-mono">
+                            <span class="bg-surface-100 dark:bg-surface-800 px-2 py-0.5 rounded text-surface-900 dark:text-surface-100 font-semibold border border-surface-200 dark:border-surface-700 text-xs select-all">
+                                {{ visiblePasswords[item.id] ? item.visible_password : '••••••••' }}
+                            </span>
+                            <button
+                                type="button"
+                                @click="togglePasswordVisibility(item.id)"
+                                class="p-1 text-surface-500 hover:text-surface-900 dark:text-surface-400 dark:hover:text-surface-100 rounded"
+                            >
+                                <svg v-if="visiblePasswords[item.id]" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
+                                </svg>
+                                <svg v-else class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12c1.074-4.65 5.244-8 10.037-8 4.793 0 8.963 3.35 10.037 8-1.074 4.65-5.244 8-10.037 8-4.793 0-8.963-3.35-10.037-8z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                </svg>
+                            </button>
+                            <button
+                                v-if="visiblePasswords[item.id]"
+                                type="button"
+                                @click="copyPassword(item.id, item.visible_password)"
+                                class="text-primary-600 font-bold text-[10px]"
+                            >
+                                {{ copiedId === item.id ? '✓' : 'Salin' }}
+                            </button>
+                        </div>
                     </div>
 
                     <div class="flex items-center justify-between text-xs pt-1">
@@ -192,4 +273,3 @@ const roleLabel = (role) => {
         />
     </AuthenticatedLayout>
 </template>
-

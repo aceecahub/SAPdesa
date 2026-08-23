@@ -10,12 +10,17 @@ const props = defineProps({
     subkategoriList: Array,
 });
 
+const initialExisting = Array.isArray(props.laporan.lampiran)
+    ? [...props.laporan.lampiran]
+    : (props.laporan.lampiran ? [props.laporan.lampiran] : []);
+
 const form = useForm({
     judul: props.laporan.judul,
     isi: props.laporan.isi,
     kategori_id: props.laporan.kategori_id,
     subkategori_id: props.laporan.subkategori_id || '',
-    lampiran: null,
+    existing_lampiran: initialExisting,
+    lampiran: [],
     _method: 'PUT',
 });
 
@@ -104,8 +109,9 @@ const submit = () => {
 
                     <FileUpload
                         v-model="form.lampiran"
-                        :existing-url="laporan.lampiran"
-                        label="Lampiran Foto / Berkas Pendukung (Opsional)"
+                        v-model:existing-urls="form.existing_lampiran"
+                        label="Lampiran Foto / Berkas Pendukung (Opsional, Maksimal 4 Berkas)"
+                        :max-files="4"
                         :error="form.errors.lampiran"
                     />
 

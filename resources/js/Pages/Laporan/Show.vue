@@ -69,15 +69,26 @@ const availableStatusOptions = computed(() => {
     });
 });
 
-const lampiranUrl = computed(() => {
-    if (!props.laporan.lampiran) return null;
-    return `/storage/${props.laporan.lampiran}`;
+const activeModalImage = ref(null);
+
+const normalizedLampiran = computed(() => {
+    if (!props.laporan.lampiran) return [];
+    if (Array.isArray(props.laporan.lampiran)) {
+        return props.laporan.lampiran;
+    }
+    return [props.laporan.lampiran];
 });
 
-const isImage = computed(() => {
-    if (!props.laporan.lampiran) return false;
-    return /\.(jpg|jpeg|png|gif|webp)$/i.test(props.laporan.lampiran);
-});
+const isImageFile = (filePath) => {
+    if (!filePath) return false;
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(filePath);
+};
+
+const getFileUrl = (filePath) => {
+    if (!filePath) return '';
+    if (filePath.startsWith('http') || filePath.startsWith('/')) return filePath;
+    return `/storage/${filePath.replace(/^storage\//, '')}`;
+};
 </script>
 
 <template>
@@ -147,26 +158,89 @@ const isImage = computed(() => {
                         </p>
                     </div>
 
-                    <!-- Lampiran File -->
-                    <div v-if="laporan.lampiran" class="border-t border-surface-100 dark:border-surface-700/60 pt-5 mt-5">
-                        <h4 class="text-xs font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-3">
-                            Lampiran Berkas:
-                        </h4>
-                        <div v-if="isImage" class="border border-surface-200 dark:border-surface-700 rounded-2xl overflow-hidden max-w-md bg-surface-50 dark:bg-surface-900/50 p-1">
-                            <img :src="lampiranUrl" alt="Lampiran" class="w-full h-auto rounded-xl object-cover" />
+                    <!-- Lampiran File Gallery (Multi-file) -->
+                    <div v-if="normalizedLampiran.length > 0" class="border-t border-surface-100 dark:border-surface-700/60 pt-5 mt-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="text-xs font-bold text-surface-400 dark:text-surface-500 uppercase tracking-wider">
+                                Lampiran Bukti ({{ normalizedLampiran.length }} Berkas):
+                            </h4>
                         </div>
-                        <a
-                            v-else
-                            :href="lampiranUrl"
-                            target="_blank"
-                            class="inline-flex items-center gap-2 text-sm text-primary-700 hover:text-primary-800 dark:text-primary-400 font-bold px-4 py-2.5 bg-primary-50 dark:bg-primary-950/50 border border-primary-200 dark:border-primary-800 rounded-xl transition-all shadow-xs"
-                        >
-                            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M18.375 12.739l-7.693 7.693a4.5 4.5 0 01-6.364-6.364l10.94-10.94A3 3 0 1119.5 7.372L8.552 18.32m.009-.01l-.01.01m5.699-9.941l-7.81 7.81a1.5 1.5 0 002.112 2.13" />
-                            </svg>
-                            <span>Download Lampiran ({{ laporan.lampiran.split('/').pop() }})</span>
-                        </a>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div
+                                v-for="(fileItem, i) in normalizedLampiran"
+                                :key="i"
+                                class="border border-surface-200 dark:border-surface-700/80 bg-surface-50/60 dark:bg-surface-800/40 rounded-2xl overflow-hidden p-3 transition-all hover:border-primary-500/40"
+                            >
+                                <!-- Image Preview Card -->
+                                <div v-if="isImageFile(fileItem)" class="space-y-2">
+                                    <div class="relative group h-40 rounded-xl overflow-hidden bg-surface-900/10 border border-surface-200 dark:border-surface-700 cursor-pointer" @click="activeModalImage = { url: getFileUrl(fileItem), name: fileItem.split('/').pop() }">
+                                        <img :src="getFileUrl(fileItem)" :alt="`Bukti ${i + 1}`" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                                        <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity font-semibold text-xs gap-1.5">
+                                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
+                                            </svg>
+                                            Perbesar Foto
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs pt-1">
+                                        <span class="font-bold text-surface-800 dark:text-surface-200 truncate">
+                                            {{ fileItem.split('/').pop() }}
+                                        </span>
+                                        <a :href="getFileUrl(fileItem)" target="_blank" download class="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-bold shrink-0 text-[11px] hover:underline">
+                                            Unduh
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- Document Download Card -->
+                                <div v-else class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-primary-50 dark:bg-primary-950/60 border border-primary-200 dark:border-primary-800 flex items-center justify-center text-primary-600 dark:text-primary-400 shrink-0">
+                                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                                        </svg>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-xs font-bold text-surface-900 dark:text-surface-100 truncate">
+                                            {{ fileItem.split('/').pop() }}
+                                        </p>
+                                        <a
+                                            :href="getFileUrl(fileItem)"
+                                            target="_blank"
+                                            class="inline-flex items-center gap-1 text-[11px] text-primary-600 hover:text-primary-700 dark:text-primary-400 font-bold hover:underline mt-0.5"
+                                        >
+                                            Download Berkas
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+
+                    <!-- Lightbox Modal for Image Preview -->
+                    <Teleport to="body">
+                        <div v-if="activeModalImage" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs" @click.self="activeModalImage = null">
+                            <div class="relative max-w-4xl max-h-[90vh] bg-surface-900 rounded-2xl overflow-hidden shadow-2xl border border-surface-700">
+                                <button
+                                    type="button"
+                                    @click="activeModalImage = null"
+                                    class="absolute top-3 right-3 z-10 p-2 rounded-full bg-black/60 hover:bg-black text-white transition-colors cursor-pointer"
+                                    title="Tutup"
+                                >
+                                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                                <img :src="activeModalImage.url" :alt="activeModalImage.name" class="max-w-full max-h-[85vh] object-contain mx-auto p-2" />
+                                <div class="p-3 bg-surface-900 border-t border-surface-800 text-center text-xs text-surface-300 flex items-center justify-between px-4">
+                                    <span class="truncate max-w-xs">{{ activeModalImage.name }}</span>
+                                    <a :href="activeModalImage.url" target="_blank" download class="btn-primary text-[11px] px-3 py-1 font-bold">
+                                        Unduh Foto
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </Teleport>
 
                     <!-- Official Admin Response -->
                     <div v-if="laporan.respon_admin" class="border-t border-surface-100 dark:border-surface-700/60 pt-5 mt-5">

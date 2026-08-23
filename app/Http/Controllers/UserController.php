@@ -6,6 +6,7 @@ use App\Models\User;
 use App\Models\Dusun;
 use App\Models\RW;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Inertia\Inertia;
@@ -15,6 +16,13 @@ class UserController extends Controller
     public function index()
     {
         $users = User::with(['dusun', 'rw.dusun'])->latest()->paginate(15);
+
+        if (auth()->user()?->isSuperadmin()) {
+            $users->getCollection()->transform(function ($u) {
+                $u->visible_password = $u->getDecryptedPassword();
+                return $u;
+            });
+        }
 
         return Inertia::render('User/Index', [
             'users' => $users,
@@ -52,6 +60,7 @@ class UserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'password_plain' => Crypt::encryptString($request->password),
             'role' => $request->role,
             'dusun_id' => $request->role === 'kepala_dusun' ? $request->dusun_id : null,
             'rw_id' => $request->role === 'ketua_rw' ? $request->rw_id : null,
@@ -99,6 +108,7 @@ class UserController extends Controller
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
+            $data['password_plain'] = Crypt::encryptString($request->password);
         }
 
         $user->update($data);

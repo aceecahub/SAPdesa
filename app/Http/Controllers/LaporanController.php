@@ -95,7 +95,8 @@ class LaporanController extends Controller
             'isi' => 'required|string',
             'kategori_id' => 'required|exists:kategori,id',
             'subkategori_id' => 'nullable|exists:subkategori,id',
-            'lampiran' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
+            'lampiran' => 'nullable|array|max:4',
+            'lampiran.*' => 'file|max:5120|mimes:jpg,jpeg,png,webp,pdf,doc,docx',
         ]);
 
         $data = $request->only(['judul', 'isi', 'kategori_id', 'subkategori_id']);
@@ -117,10 +118,20 @@ class LaporanController extends Controller
             $data['rw_id'] = $request->rw_id;
         }
 
-        // Lampiran
+        // Lampiran (multiple files, max 4)
+        $lampiranPaths = [];
         if ($request->hasFile('lampiran')) {
-            $data['lampiran'] = $request->file('lampiran')->store('lampiran', 'public');
+            $files = $request->file('lampiran');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            foreach (array_slice($files, 0, 4) as $file) {
+                if ($file && $file->isValid()) {
+                    $lampiranPaths[] = $file->store('lampiran', 'public');
+                }
+            }
         }
+        $data['lampiran'] = $lampiranPaths;
 
         $laporan = Laporan::create($data);
 
@@ -195,18 +206,42 @@ class LaporanController extends Controller
             'isi' => 'required|string',
             'kategori_id' => 'required|exists:kategori,id',
             'subkategori_id' => 'nullable|exists:subkategori,id',
-            'lampiran' => 'nullable|file|max:5120|mimes:jpg,jpeg,png,pdf,doc,docx',
+            'existing_lampiran' => 'nullable|array',
+            'lampiran' => 'nullable|array',
+            'lampiran.*' => 'file|max:5120|mimes:jpg,jpeg,png,webp,pdf,doc,docx',
         ]);
 
         $data = $request->only(['judul', 'isi', 'kategori_id', 'subkategori_id']);
 
-        if ($request->hasFile('lampiran')) {
-            // Delete old lampiran
-            if ($laporan->lampiran) {
-                Storage::disk('public')->delete($laporan->lampiran);
-            }
-            $data['lampiran'] = $request->file('lampiran')->store('lampiran', 'public');
+        // Handle existing & new files
+        $keptExisting = $request->input('existing_lampiran', []);
+        if (!is_array($keptExisting)) {
+            $keptExisting = [];
         }
+
+        // Delete any old lampiran files that are no longer kept
+        $oldLampiran = is_array($laporan->lampiran) ? $laporan->lampiran : [];
+        $filesToDelete = array_diff($oldLampiran, $keptExisting);
+        foreach ($filesToDelete as $oldFile) {
+            Storage::disk('public')->delete($oldFile);
+        }
+
+        $finalPaths = $keptExisting;
+
+        if ($request->hasFile('lampiran')) {
+            $files = $request->file('lampiran');
+            if (!is_array($files)) {
+                $files = [$files];
+            }
+            $availableSlots = max(0, 4 - count($finalPaths));
+            foreach (array_slice($files, 0, $availableSlots) as $file) {
+                if ($file && $file->isValid()) {
+                    $finalPaths[] = $file->store('lampiran', 'public');
+                }
+            }
+        }
+
+        $data['lampiran'] = $finalPaths;
 
         $laporan->update($data);
 

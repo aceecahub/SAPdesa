@@ -22,7 +22,7 @@ const form = useForm({
     kategori_id: '',
     subkategori_id: '',
     rw_id: isKetuaRw.value ? user.value?.rw_id : '',
-    lampiran: null,
+    lampiran: [],
 });
 
 const formatRwLabel = (rw) => {
@@ -158,7 +158,8 @@ const submit = () => {
 
                     <FileUpload
                         v-model="form.lampiran"
-                        label="Lampiran Foto / Berkas Pendukung (Opsional)"
+                        label="Lampiran Foto / Berkas Bukti Pendukung (Opsional, Maksimal 4 Berkas)"
+                        :max-files="4"
                         :error="form.errors.lampiran"
                     />
 
