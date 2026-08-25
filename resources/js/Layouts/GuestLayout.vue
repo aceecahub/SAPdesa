@@ -55,13 +55,6 @@ onMounted(() => {
             <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-primary-950/80 rounded-full mix-blend-multiply filter blur-3xl opacity-80 animate-blob animation-delay-4000"></div>
             
             <div class="relative z-10 w-full flex flex-col justify-between p-12 lg:p-16 text-white">
-                <!-- Top Badge -->
-                <div>
-                    <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur border border-white/15 text-xs font-semibold text-primary-100 tracking-wide uppercase">
-                        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                        Aplikasi Pelayanan Desa Digital
-                    </div>
-                </div>
 
                 <!-- Center Content -->
                 <div class="my-auto py-8">

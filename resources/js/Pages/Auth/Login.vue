@@ -161,7 +161,7 @@ const submit = () => {
         <!-- Role Hint Footer -->
         <div class="mt-8 pt-6 border-t border-surface-100 dark:border-surface-700/60 text-center">
             <p class="text-xs text-surface-500 dark:text-surface-400">
-                Akses sistem ini terbatas untuk <span class="font-medium text-surface-700 dark:text-surface-300">Kepala Dusun</span>, <span class="font-medium text-surface-700 dark:text-surface-300">Admin Desa</span>, &amp; <span class="font-medium text-surface-700 dark:text-surface-300">Superadmin</span>.
+                Akses sistem ini terbatas untuk <span class="font-medium text-surface-700 dark:text-surface-300">RW</span>, <span class="font-medium text-surface-700 dark:text-surface-300">Kepala Dusun</span>, <span class="font-medium text-surface-700 dark:text-surface-300">Admin Desa</span>, &amp; <span class="font-medium text-surface-700 dark:text-surface-300">Superadmin</span>.
             </p>
         </div>
     </GuestLayout>
