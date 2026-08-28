@@ -140,7 +140,10 @@ const formatRwNumber = (num) => {
                                             <span class="font-bold text-surface-900 dark:text-surface-100 text-xs block">
                                                 {{ item.nama_ketua || 'Belum diatur' }}
                                             </span>
-                                            <span class="text-[11px] text-surface-400 font-medium">Ketua RW</span>
+                                            <span v-if="item.users?.find(u => u.role === 'ketua_rw')" class="text-[11px] text-primary-600 dark:text-primary-400 font-semibold block truncate max-w-[180px]">
+                                                ✉️ {{ item.users.find(u => u.role === 'ketua_rw').email }}
+                                            </span>
+                                            <span v-else class="text-[11px] text-surface-400 font-medium block">Ketua RW</span>
                                         </div>
                                     </div>
                                 </td>
@@ -212,6 +215,9 @@ const formatRwNumber = (num) => {
                             <div class="flex-1 min-w-0 text-xs">
                                 <p class="font-extrabold text-surface-900 dark:text-surface-100 truncate">
                                     {{ item.nama_ketua || 'Belum ada Ketua RW' }}
+                                </p>
+                                <p v-if="item.users?.find(u => u.role === 'ketua_rw')" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 truncate">
+                                    ✉️ {{ item.users.find(u => u.role === 'ketua_rw').email }}
                                 </p>
                                 <p class="text-[11px] font-semibold text-surface-500 dark:text-surface-400 mt-0.5">
                                     📍 Dusun {{ item.dusun?.nama }}

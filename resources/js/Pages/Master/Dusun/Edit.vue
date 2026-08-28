@@ -5,6 +5,7 @@ import { ref } from 'vue';
 
 const props = defineProps({
     dusun: Object,
+    userAccount: Object,
 });
 
 const form = useForm({
@@ -12,6 +13,9 @@ const form = useForm({
     jumlah_penduduk: props.dusun.jumlah_penduduk ?? '',
     nama_kepala: props.dusun.nama_kepala ?? '',
     foto_kepala: null,
+    email: props.userAccount?.email ?? '',
+    password: '',
+    password_confirmation: '',
     _method: 'PUT',
 });
 
@@ -60,47 +64,85 @@ const submit = () => {
         <div class="max-w-2xl mx-4 sm:mx-0">
             <div class="card p-6 sm:p-8 rounded-2xl shadow-sm">
                 <form @submit.prevent="submit" class="space-y-6">
-                    <div>
-                        <label class="label-text">
-                            Nama Dusun <span class="text-rose-500">*</span>
-                        </label>
-                        <input v-model="form.nama" type="text" class="input-field" />
-                        <p v-if="form.errors.nama" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.nama }}</p>
+                    <div class="space-y-4">
+                        <h3 class="text-xs font-bold text-surface-400 uppercase tracking-wider">Informasi Wilayah Dusun</h3>
+
+                        <div>
+                            <label class="label-text">
+                                Nama Dusun <span class="text-rose-500">*</span>
+                            </label>
+                            <input v-model="form.nama" type="text" class="input-field" />
+                            <p v-if="form.errors.nama" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.nama }}</p>
+                        </div>
+
+                        <div>
+                            <label class="label-text">Jumlah Penduduk (Jiwa)</label>
+                            <input v-model="form.jumlah_penduduk" type="number" min="0" class="input-field" />
+                            <p v-if="form.errors.jumlah_penduduk" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.jumlah_penduduk }}</p>
+                        </div>
+
+                        <div>
+                            <label class="label-text">Nama Kepala Dusun</label>
+                            <input v-model="form.nama_kepala" type="text" class="input-field" />
+                            <p v-if="form.errors.nama_kepala" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.nama_kepala }}</p>
+                        </div>
+
+                        <!-- Upload / Ganti Foto Kepala Dusun -->
+                        <div>
+                            <label class="label-text">Foto Profil Kepala Dusun (Opsional)</label>
+                            <div class="mt-2 flex items-center gap-4">
+                                <div class="w-16 h-16 rounded-full overflow-hidden bg-surface-100 dark:bg-surface-700 border-2 border-primary-500/40 shrink-0 flex items-center justify-center text-xl font-black text-surface-400 shadow-sm">
+                                    <img v-if="imagePreview" :src="imagePreview" alt="Preview Foto" class="w-full h-full object-cover" />
+                                    <span v-else>👤</span>
+                                </div>
+
+                                <div class="flex-1">
+                                    <input
+                                        type="file"
+                                        @change="handleFileChange"
+                                        accept="image/*"
+                                        class="block w-full text-xs text-surface-500 file:mr-4 file:py-2 file:px-4 file:border file:border-surface-200 dark:file:border-surface-700 file:rounded-xl file:text-xs file:font-bold file:bg-surface-100 dark:file:bg-surface-700 file:text-surface-700 dark:file:text-surface-200 hover:file:bg-surface-200 dark:hover:file:bg-surface-600 file:cursor-pointer file:transition-colors"
+                                    />
+                                    <p class="text-[11px] text-surface-400 dark:text-surface-500 mt-1">Pilih gambar baru untuk mengganti foto saat ini (Maks. 2MB).</p>
+                                </div>
+                            </div>
+                            <p v-if="form.errors.foto_kepala" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.foto_kepala }}</p>
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="label-text">Jumlah Penduduk (Jiwa)</label>
-                        <input v-model="form.jumlah_penduduk" type="number" min="0" class="input-field" />
-                        <p v-if="form.errors.jumlah_penduduk" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.jumlah_penduduk }}</p>
-                    </div>
+                    <!-- User Account Section -->
+                    <div class="border-t border-surface-100 dark:border-surface-700/60 pt-6 space-y-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-base">🔐</span>
+                            <h3 class="text-xs font-bold text-surface-900 dark:text-surface-100 uppercase tracking-wider">
+                                Akun Login Kepala Dusun
+                            </h3>
+                        </div>
 
-                    <div>
-                        <label class="label-text">Nama Kepala Dusun</label>
-                        <input v-model="form.nama_kepala" type="text" class="input-field" />
-                        <p v-if="form.errors.nama_kepala" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.nama_kepala }}</p>
-                    </div>
+                        <div>
+                            <label class="label-text">
+                                Email Login <span class="text-rose-500">*</span>
+                            </label>
+                            <input v-model="form.email" type="email" class="input-field" placeholder="kadus.ciherang@sirnaputra.desa.id" />
+                            <p v-if="form.errors.email" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.email }}</p>
+                        </div>
 
-                    <!-- Upload / Ganti Foto Kepala Dusun -->
-                    <div>
-                        <label class="label-text">Foto Profil Kepala Dusun (Opsional)</label>
-                        <div class="mt-2 flex items-center gap-4">
-                            <!-- Avatar Preview -->
-                            <div class="w-16 h-16 rounded-full overflow-hidden bg-surface-100 dark:bg-surface-700 border-2 border-primary-500/40 shrink-0 flex items-center justify-center text-xl font-black text-surface-400 shadow-sm">
-                                <img v-if="imagePreview" :src="imagePreview" alt="Preview Foto" class="w-full h-full object-cover" />
-                                <span v-else>👤</span>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label class="label-text">
+                                    Password Baru
+                                </label>
+                                <input v-model="form.password" type="password" class="input-field" placeholder="Kosongkan jika tidak diubah" />
+                                <p v-if="form.errors.password" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.password }}</p>
                             </div>
 
-                            <div class="flex-1">
-                                <input
-                                    type="file"
-                                    @change="handleFileChange"
-                                    accept="image/*"
-                                    class="block w-full text-xs text-surface-500 file:mr-4 file:py-2 file:px-4 file:border file:border-surface-200 dark:file:border-surface-700 file:rounded-xl file:text-xs file:font-bold file:bg-surface-100 dark:file:bg-surface-700 file:text-surface-700 dark:file:text-surface-200 hover:file:bg-surface-200 dark:hover:file:bg-surface-600 file:cursor-pointer file:transition-colors"
-                                />
-                                <p class="text-[11px] text-surface-400 dark:text-surface-500 mt-1">Pilih gambar baru untuk mengganti foto saat ini (Maks. 2MB).</p>
+                            <div>
+                                <label class="label-text">
+                                    Konfirmasi Password Baru
+                                </label>
+                                <input v-model="form.password_confirmation" type="password" class="input-field" placeholder="Kosongkan jika tidak diubah" />
                             </div>
                         </div>
-                        <p v-if="form.errors.foto_kepala" class="text-xs font-semibold text-rose-600 dark:text-rose-400 mt-1.5">{{ form.errors.foto_kepala }}</p>
                     </div>
 
                     <div class="flex items-center justify-end gap-3 pt-4 border-t border-surface-100 dark:border-surface-700/60">
@@ -109,7 +151,7 @@ const submit = () => {
                         </Link>
                         <button type="submit" class="btn-primary text-xs font-bold" :disabled="form.processing">
                             <svg v-if="form.processing" class="animate-spin w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/></svg>
-                            Perbarui Dusun
+                            Perbarui Dusun & Akun
                         </button>
                     </div>
                 </form>
@@ -117,4 +159,3 @@ const submit = () => {
         </div>
     </AuthenticatedLayout>
 </template>
-

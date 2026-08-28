@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 
 const props = defineProps({
     laporan: Object,
@@ -258,7 +258,7 @@ const getFileUrl = (filePath) => {
                     </div>
 
                     <!-- Action for Reporter -->
-                    <div v-if="laporan.status === 'baru' && user.id === laporan.user_id" class="border-t border-surface-100 dark:border-surface-700/60 pt-4 mt-5 flex justify-end">
+                    <div v-if="laporan.status === 'baru' && user?.id === laporan.user_id" class="border-t border-surface-100 dark:border-surface-700/60 pt-4 mt-5 flex justify-end">
                         <Link :href="route('laporan.edit', laporan.id)" class="btn-secondary text-xs font-bold">
                             ✏️ Edit Laporan Saya
                         </Link>

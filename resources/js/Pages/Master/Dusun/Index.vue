@@ -97,7 +97,10 @@ const handleDelete = () => {
                                             <span class="font-bold text-surface-900 dark:text-surface-100 text-xs block">
                                                 {{ item.nama_kepala || 'Belum diatur' }}
                                             </span>
-                                            <span class="text-[11px] text-surface-400 font-medium">Kepala Dusun</span>
+                                            <span v-if="item.users?.find(u => u.role === 'kepala_dusun')" class="text-[11px] text-primary-600 dark:text-primary-400 font-semibold block truncate max-w-[180px]">
+                                                ✉️ {{ item.users.find(u => u.role === 'kepala_dusun').email }}
+                                            </span>
+                                            <span v-else class="text-[11px] text-surface-400 font-medium block">Kepala Dusun</span>
                                         </div>
                                     </div>
                                 </td>
@@ -167,6 +170,9 @@ const handleDelete = () => {
                             <div class="flex-1 min-w-0">
                                 <p class="text-xs font-extrabold text-surface-900 dark:text-surface-100 truncate">
                                     {{ item.nama_kepala || 'Belum ada Kepala Dusun' }}
+                                </p>
+                                <p v-if="item.users?.find(u => u.role === 'kepala_dusun')" class="text-[11px] font-semibold text-primary-600 dark:text-primary-400 truncate">
+                                    ✉️ {{ item.users.find(u => u.role === 'kepala_dusun').email }}
                                 </p>
                                 <p class="text-[11px] font-semibold text-surface-500 dark:text-surface-400 mt-0.5">
                                     👥 {{ item.jumlah_penduduk ? item.jumlah_penduduk.toLocaleString('id-ID') + ' Penduduk' : '0 Penduduk' }}
